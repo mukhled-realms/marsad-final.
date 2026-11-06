@@ -1,208 +1,189 @@
 import streamlit as st
+import pandas as pd
+import time
 
-def show_enterprise_marsad():
-    """
-    منصة مرصد (v6.1 Enterprise Edition) - الطبعة الفاخرة
-    تصميم داكن مع لمسات ذهبية، أسعار استثمارية استراتيجية، وجدار دفع بنكي.
-    تم تصحيح الأرقام (ROI) لتكون منطقية (توفير 5 أضعاف).
-    """
-    
-    # إعداد الصفحة وتصميم الـ CSS الفاخر (Dark Mode + Gold Accents)
-    st.markdown("""
-        <style>
-        .stApp {
-            background-color: #0b0f19;
-            color: #f8fafc;
-        }
-        .hero-container {
-            background: linear-gradient(135deg, #111827 0%, #030712 100%);
-            padding: 3rem 2rem;
-            border-radius: 16px;
-            border: 1px solid #d4af37;
-            box-shadow: 0 10px 25px -5px rgba(212, 175, 55, 0.1);
-            text-align: center;
-            margin-bottom: 2.5rem;
-        }
-        .hero-title {
-            font-size: 2.8rem;
-            font-weight: 900;
-            color: #d4af37;
-            margin-bottom: 1rem;
-            letter-spacing: -0.025em;
-        }
-        .hero-subtitle {
-            font-size: 1.25rem;
-            color: #94a3b8;
-            line-height: 1.8;
-            max-width: 900px;
-            margin: 0 auto;
-        }
-        .section-header {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #f1f5f9;
-            border-bottom: 2px solid #1e293b;
-            padding-bottom: 0.75rem;
-            margin-top: 3rem;
-            margin-bottom: 1.5rem;
-        }
-        .case-card {
-            background-color: #111827;
-            border: 1px solid #1f2937;
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            border-right: 4px solid #d4af37;
-        }
-        .pricing-card-gold {
-            background: linear-gradient(180deg, #111827 0%, #1f2937 100%);
-            border: 2px solid #d4af37;
-            border-radius: 16px;
-            padding: 2.5rem 1.5rem;
-            text-align: center;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-            position: relative;
-        }
-        .pricing-card-standard {
-            background-color: #111827;
-            border: 1px solid #374151;
-            border-radius: 16px;
-            padding: 2.5rem 1.5rem;
-            text-align: center;
-        }
-        .price-tag {
-            font-size: 2.2rem;
-            font-weight: 800;
-            color: #d4af37;
-            margin: 1rem 0;
-        }
-        .roi-badge {
-            background-color: rgba(212, 175, 55, 0.15);
-            color: #d4af37;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            display: inline-block;
-            margin-top: 1rem;
-            border: 1px solid rgba(212, 175, 55, 0.3);
-        }
-        .paywall-box {
-            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-            border: 2px solid #d4af37;
-            padding: 2.5rem;
-            border-radius: 16px;
-            text-align: center;
-            margin-top: 2rem;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+st.set_page_config(
+    page_title="مرصد الفرص | المنصة السيادية للتجارة والتشغيل",
+    page_icon="💎",
+    layout="wide"
+)
 
-    # --- 1. قسم Hero: قصة المؤسس الفخمة ---
-    st.markdown("""
-        <div class="hero-container">
-            <div class="hero-title">مرصد | المنهجية السيادية لمنع الخسائر التشغيلية</div>
-            <div class="hero-subtitle">
-                "عملت في قلب الميدان ورأيت بعيني كيف تتوقف أنظمة الكاشير لتترك 30 عربة تسوق مليئة بالبضائع؛ وكيف تُترك طبلية مبردة في المستودع الخلفي لـ 4 ساعات فتتلف بـ 140,000 ريال؛ وكيف تنفد المياه من الرفوف رغم امتلاء المستودعات. من هذا الوجع المالي الصامت.. وُلِدت <b>مرصد</b> لتعيد هندسة أرباحك."
+# تخصيص تصميم بصري فخم وساطع يبرز صور المنتجات والرفوف بوضوح تام
+st.markdown("""
+    <style>
+    .stApp { background-color: #f8fafc; color: #0f172a; }
+    .shelf-container {
+        background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px;
+        padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    }
+    .product-box {
+        background: #ffffff; border: 1px solid #cbd5e1; border-radius: 10px;
+        padding: 1rem; text-align: center; transition: all 0.3s ease;
+    }
+    .product-box:hover {
+        transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        border-color: #3b82f6;
+    }
+    .paywall-box {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        color: #ffffff; padding: 2.5rem; border-radius: 16px; text-align: center;
+        border: 2px solid #d4af37;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# إدارة حالة الاشتراك والأمان
+if "is_subscribed" not in st.session_state:
+    st.session_state["is_subscribed"] = False
+
+if "missing_demand" not in st.session_state:
+    st.session_state["missing_demand"] = []
+
+# قاعدة البيانات المحدثة مع تفاصيل الرفوف، التغليف، والصور الحقيقية الكاملة
+shelf_catalog = [
+    {
+        "id": "S1", "الرف": "رف المشروبات والمياه الطازجة",
+        "المنتج": "مياه صفا (48 عبوة × 0.2 لتر)",
+        "سعر التطبيق الميداني": 10.0, "سعر السوق": 14.99, "هامش الربح": "33%",
+        "طريقة التغليف والتنسيق": "تغليف حراري متماسك لسهولة الحمل، صف متناسق يضمن رؤية العلامة بوضوح.",
+        "الصورة الحقيقية": "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=600&auto=format&fit=crop&q=80",
+        "ملاحظات الاستختراق": "يتم جلبها حصرياً من عروض التطبيق الرقمي لبنده لتوفير 4.99 ريال في كل كرتون."
+    },
+    {
+        "id": "S2", "الرف": "رف المناديل والورقيات الأساسية",
+        "المنتج": "سمايل مناديل وجه (10 عبوات)",
+        "سعر التطبيق الميداني": 15.0, "سعر السوق": 25.99, "هامش الربح": "42%",
+        "طريقة التغليف والتنسيق": "رص عمودي مزدوج على الرفوف الأمامية لزيادة معدل الدوران البصري وجذب انتباه الزبون.",
+        "الصورة الحقيقية": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&auto=format&fit=crop&q=80",
+        "ملاحظات الاستختراق": "منتج استهلاكي يومي متكرر، هامش ربحه العالي يغطي مصاريف التوصيل بالكامل."
+    },
+    {
+        "id": "S3", "الرف": "رف المنظفات والعناية التجارية",
+        "المنتج": "مسحوق غسيل تايد (٦ كيلو)",
+        "سعر التطبيق الميداني": 45.0, "سعر السوق": 74.99, "هامش الربح": "40%",
+        "طريقة التغليف والتنسيق": "وضع العبوات الكبرى في قاعدة الرف لتوزيع الوزن ومنع السقوط مع واظهار السعر البارز.",
+        "الصورة الحقيقية": "https://images.unsplash.com/photo-1585421514284-efb74c2b69ba?w=600&auto=format&fit=crop&q=80",
+        "ملاحظات الاستختراق": "مطلوب بشدة من المغاسل والمقاهي لتنظيف الأدوات بأسعار جملة استثنائية."
+    }
+]
+
+st.sidebar.title("💎 مرصد الفرص")
+st.sidebar.markdown("**السيادة في الرفوف والتغليف التشغيلي**")
+
+nav = st.sidebar.selectbox("اختر قسم المنصة:", [
+    "🛒 هندسة الرفوف وعرض الصور الحقيقية",
+    "📚 المكتبة التشغيلية وتسعير أسرار التغليف",
+    "📷 كاميرا المسح والطلب الحصري",
+    "🧮 الحاسبة الذكية والمساعد (محمي)",
+    "💳 بوابة التفعيل البنكي"
+])
+
+# --- 1. هندسة الرفوف وعرض الصور الحقيقية ---
+if nav == "🛒 هندسة الرفوف وعرض الصور الحقيقية":
+    st.title("🛒 الرفوف الذكية وعرض المنتجات (الصورة الحقيقية الكاملة)")
+    st.markdown("تصفح الرفوف الميدانية بعناية. اضغط على أي منتج لرؤية صورته الحقيقية بالكامل وتفاصيل تنسيقه وتغليفه:")
+
+    for item in shelf_catalog:
+        with st.container():
+            st.markdown(f"""
+                <div class="shelf-container">
+                    <h3 style="color: #1e293b; margin-top:0;">📍 {item['الرف']}</h3>
+                </div>
+            """, unsafe_allow_html=True)
+            
+            c1, c2 = st.columns([1, 2])
+            with c1:
+                st.image(item['الصورة الحقيقية'], use_column_width=True)
+            with c2:
+                st.subheader(item['المنتج'])
+                st.success(f"💰 سعر الشراء من التطبيق/الميدان: {item['سعر التطبيق الميداني']} ريال (سعر السوق: {item['سعر السوق']} ريال)")
+                st.info(f"📈 هامش الربح التشغيلي: {item['هامش الربح']}")
+                st.write(f"📦 **طريقة التغليف والتنسيق الاحترافي:** {item['طريقة التغليف والتنسيق']}")
+                st.write(f"💡 **استراتيجية الاختراق:** {item['ملاحظات الاستختراق']}")
+                
+                if st.button(f"🔍 عرض معاينة الصورة الحقيقية الكاملة ({item['id']})", key=f"preview_{item['id']}"):
+                    st.session_state['active_modal'] = item
+
+    # النافذة المنبثقة للصورة الحقيقية الكاملة
+    if 'active_modal' in st.session_state:
+        m_item = st.session_state['active_modal']
+        st.markdown("---")
+        st.warning(f"✨ معاينة مكبرة للصورة الحقيقية لـ: **{m_item['المنتج']}**")
+        st.image(m_item['الصورة الحقيقية'], use_column_width=True)
+        if st.button("إغلاق المعاينة"):
+            del st.session_state['active_modal']
+            st.rerun()
+
+# --- 2. المكتبة التشغيلية وتسعير أسرار التغليف ---
+elif nav == "📚 المكتبة التشغيلية وتسعير أسرار التغليف":
+    st.title("📚 المكتبة التشغيلية (أسرار الرفوف، التغليف، والاختراق)")
+    st.markdown("هنا يتم توثيق أسرار الميدان التي لا يعرفها المنافسون، وتسعير الأدلة التشغيلية للراغبين بالاشتراك:")
+
+    col_l1, col_l2 = st.columns(2)
+    with col_l1:
+        st.markdown("""
+            <div class="shelf-container">
+                <h3 style="color: #d4af37;">📦 دليل هندسة التغليف الحصري</h3>
+                <p>كيف تغلف السلع والكراتين بطريقة تمنع التلف وتزيد من جاذبية العرض للتاجر والمستهلك النهائي.</p>
+                <p><b>سعر التقرير المستقل:</b> 1,500 ريال (مشمول في باقة الامتثال)</p>
             </div>
+        """, unsafe_allow_html=True)
+    with col_l2:
+        st.markdown("""
+            <div class="shelf-container">
+                <h3 style="color: #d4af37;">🎯 استراتيجيات رص الرفوف (Shelf Space Optimization)</h3>
+                <p>أين تضع المنتجات الأعلى ربحية؟ وكيف تستغل مستوى النظر لرفع المبيعات بنسبة 22% فوراً.</p>
+                <p><b>سعر التقرير المستقل:</b> 2,500 ريال (مشمول في باقة الامتثال)</p>
+            </div>
+        """, unsafe_allow_html=True)
+
+# --- 3. كاميرا المسح والطلب الحصري ---
+elif nav == "📷 كاميرا المسح والطلب الحصري":
+    st.title("📷 مسح الباركود والتقاط النواقص الحصرية")
+    
+    query = st.text_input("أدخل اسم المنتج أو الباركود للبحث أو تسجيل النقص:")
+    if query:
+        found = [p for p in shelf_catalog if query.lower() in p["المنتج"].lower()]
+        if found:
+            st.success("✅ المنتج متوفر في الرفوف المرصودة:")
+            for f in found:
+                st.write(f"- **{f['المنتج']}** | السعر: {f['سعر التطبيق الميداني']} ريال | الهامش: {f['هامش الربح']}")
+        else:
+            st.error("❌ المنتج غير متوفر حالياً على الرفوف!")
+            st.session_state["missing_demand"].append(query)
+            st.info("💡 تم تسجيل هذا المنتج في (قائمة الطلبات الحصرية المفقودة) لتقوم بتوفيره ميدانياً فوراً.")
+
+# --- 4. الحاسبة الذكية والمساعد ---
+elif nav == "🧮 الحاسبة الذكية والمساعد (محمي)":
+    st.title("🧮 الحاسبة السرية والذكاء الاصطناعي")
+    
+    if not st.session_state["is_subscribed"]:
+        st.markdown("""
+            <div class="paywall-box">
+                <h2>🔒 منطقة محمية بحصن أمني</h2>
+                <p>حاسبة الأرباح السرية ومحرك الذكاء الاصطناعي مقفلان تماماً لحماية أسرار الرفوف والتسعير من المتطفلين والمنافسين.</p>
+            </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.success("🔓 أهلاً بك يا دكتور! الحاسبة السرية مفعلة بالكامل.")
+        # تشغيل الحاسبة...
+
+# --- 5. بوابة التفعيل البنكي ---
+elif nav_choice == "💳 بوابة التفعيل البنكي" if 'nav_choice' in locals() else "💳 بوابة التفعيل البنكي":
+    # تم معالجة القائمة باسم nav
+    pass
+
+if nav == "💳 بوابة التفعيل البنكي":
+    st.title("💳 بوابة التحويل البنكي وتفعيل الصلاحيات السيادية")
+    st.markdown("""
+        <div class="shelf-container" style="text-align: center;">
+            <h3 style="color: #1e293b;">مؤسسة مرصد الفرص للتجارة التشغيلية</h3>
+            <p style="font-size: 1.1rem; margin-top: 1rem;">حساب التحويل الرسمي المعتمد:</p>
+            <p style="font-family: monospace; font-size: 1.4rem; font-weight: bold; color: #d4af37;">IBAN: SA03 8000 0000 0000 0000 0000</p>
         </div>
     """, unsafe_allow_html=True)
-
-    # --- 2. المكتبة التشغيلية ودراسات الحالة ---
-    st.markdown('<div class="section-header">🏛️ الأرشيف التشغيلي ودراسات الحالة الاستراتيجية</div>', unsafe_allow_html=True)
     
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown("""
-            <div class="case-card">
-                <h3 style="color: #d4af37; margin-top:0;">📦 كارثة الطبالي (140,000 ر.س تلف)</h3>
-                <p style="color: #cbd5e1;">التأخر في إدخال الطبالي المبردة للنظام يولد تلفاً صامتاً يلتهم رأس المال. نقدم بروتوكول فحص فوري يغلق هذه الثغرة خلال 15 دقيقة.</p>
-            </div>
-            <div class="case-card">
-                <h3 style="color: #d4af37; margin-top:0;">🛒 عربات الكاشير المتروكة</h3>
-                <p style="color: #cbd5e1;">تعطل سيستم الأسعار وقت الذروة يفقدك ولاء العملاء. نضع بين يديك بروتوكول طوارئ يدير الأزمة خلال أول 120 ثانية.</p>
-            </div>
-        """, unsafe_allow_html=True)
-    with col2:
-        st.markdown("""
-            <div class="case-card">
-                <h3 style="color: #d4af37; margin-top:0;">🚪 الحاوية الخلفية والفوارغ (هسر 8%+)</h3>
-                <p style="color: #cbd5e1;">الكراتين المفتوحة والمهملة في الخلف تعني نزيفاً نقدياً مباشراً. نراقب الانكماش ونطبق منهجية 5 Whys لضبط المخزون.</p>
-            </div>
-            <div class="case-card">
-                <h3 style="color: #d4af37; margin-top:0;">📊 المنهجية والمعايير (50 سؤال تشغيلي)</h3>
-                <p style="color: #cbd5e1;">تغطية شاملة لـ 5 محاور (الرفوف، المستودع، الانكماش، العمليات، تجربة العميل) مع مؤشرات أداء (KPIs) ونمذجة Risk Score دقيقة.</p>
-            </div>
-        """, unsafe_allow_html=True)
-
-    # --- 3. جدول الأسعار الاستراتيجي بناءً على القيمة (ROI) ---
-    st.markdown('<div class="section-header">💎 باقات الاستثمار التشغيلي (Value-Based Pricing)</div>', unsafe_allow_html=True)
-    
-    p1, p2, p3 = st.columns(3)
-    
-    with p1:
-        st.markdown("""
-            <div class="pricing-card-standard">
-                <h3>التشخيص السريع</h3>
-                <div class="price-tag">50,000 ر.س</div>
-                <hr style="border-color: #374151;">
-                <p style="color: #94a3b8; font-size: 0.95rem;">جلسة مكثفة لكشف الثغرات الحرجة في فرع رئيسي مع تقرير Risk Score تنفيذي.</p>
-                <div class="roi-badge">تدفع 50 ألف ← توفر 250 ألف</div>
-            </div>
-        """, unsafe_allow_html=True)
-        st.write("")
-        if st.button("اختيار باقة التشخيص", use_container_width=True, key="btn_p1"):
-            st.session_state['selected_package'] = "باقة التشخيص السريع (50,000 ريال)"
-
-    with p2:
-        st.markdown("""
-            <div class="pricing-card-gold">
-                <span style="background: #d4af37; color: #000; padding: 3px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 800;">الأكثر طلباً للمؤسسات ⭐</span>
-                <h3 style="margin-top: 10px;">التدقيق الشامل</h3>
-                <div class="price-tag">150,000 ر.س</div>
-                <hr style="border-color: #d4af37;">
-                <p style="color: #cbd5e1; font-size: 0.95rem;">زيارة ميدانية وتطبيق 50 سؤال تقييم، هيكلة المستودعات ومنع الخسائر جذرياً.</p>
-                <div class="roi-badge">تدفع 150 ألف ← توفر 750 ألف</div>
-            </div>
-        """, unsafe_allow_html=True)
-        st.write("")
-        if st.button("اختيار التدقيق الشامل", use_container_width=True, key="btn_p2"):
-            st.session_state['selected_package'] = "باقة التدقيق الشامل (150,000 ريال)"
-
-    with p3:
-        st.markdown("""
-            <div class="pricing-card-standard">
-                <h3>الامتثال السنوي</h3>
-                <div class="price-tag">350,000 ر.س <span style="font-size:1rem; color:#94a3b8;">/سنوياً</span></div>
-                <hr style="border-color: #374151;">
-                <p style="color: #94a3b8; font-size: 0.95rem;">شراكة استراتيجية، تدقيق دوري ربع سنوي، شهادة اعتماد مرصد، وإشراف مباشر.</p>
-                <div class="roi-badge">تدفع 350 ألف ← توفر 1.75 مليون</div>
-            </div>
-        """, unsafe_allow_html=True)
-        st.write("")
-        if st.button("اختيار الامتثال السنوي", use_container_width=True, key="btn_p3"):
-            st.session_state['selected_package'] = "باقة الامتثال السنوي (350,000 ريال/سنوياً)"
-
-    # --- 4. جدار الدفع (Paywall) الحصري ---
-    st.markdown('<div class="section-header">🔒 بوابة تفعيل العضوية المؤسسية</div>', unsafe_allow_html=True)
-    
-    selected = st.session_state.get('selected_package', 'لم يتم اختيار الباقة بعد (يرجى الضغط على زر اختيار الباقة أعلاه)')
-    
-    st.markdown(f"""
-        <div class="paywall-box">
-            <h2 style="color: #d4af37; margin-bottom: 0.5rem;">الباقة المحددة: {selected}</h2>
-            <p style="color: #94a3b8; margin-bottom: 1.5rem;">
-                لتفعيل العضوية واعتماد الارتباط بـ "مرصد"، يرجى إتمام التحويل البنكي للحساب الرسمي للشركة.
-            </p>
-            <div style="background-color: #0b0f19; padding: 1.5rem; border-radius: 8px; border: 1px dashed #d4af37; display: inline-block; min-width: 350px; margin-bottom: 1.5rem;">
-                <p style="color: #f8fafc; font-weight: bold; margin: 0;">اسم الحساب: مؤسسة مرصد الاستثمارية</p>
-                <p style="color: #d4af37; font-family: monospace; font-size: 1.2rem; margin: 0.5rem 0 0 0;">IBAN: SA03 8000 0000 0000 0000 0000</p>
-            </div>
-            <p style="color: #cbd5e1; font-size: 0.9rem;">
-                بعد إتمام التحويل، يرجى إرسال الإيصال للشريك المؤسس د. مخلد لتفعيل لوحة التحكم والصلاحيات السيادية فوراً.
-            </p>
-        </div>
-    """, unsafe_allow_html=True)
-
-# طريقة الاستدعاء في ملف app.py الرئيسي:
-# show_enterprise_marsad()
+    code = st.text_input("أدخل كود التفعيل المالي:")
+    if st.button("تفعيل الوصول الكامل للمنصة"):
+        st.session_state["is_subscribed"] = True
+        st.success("🎉 تم تفعيل العضوية والوصول الكامل للرفوف والحاسبة بنجاح!")
