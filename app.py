@@ -1,189 +1,148 @@
 import streamlit as st
 import pandas as pd
-import time
+import os
 
+# إعداد المنصة السيادية
 st.set_page_config(
     page_title="مرصد الفرص | المنصة السيادية للتجارة والتشغيل",
     page_icon="💎",
     layout="wide"
 )
 
-# تخصيص تصميم بصري فخم وساطع يبرز صور المنتجات والرفوف بوضوح تام
+# تصميم بصري ساطع، مريح، ويبرز الرفوف والصور الحقيقية
 st.markdown("""
     <style>
     .stApp { background-color: #f8fafc; color: #0f172a; }
-    .shelf-container {
-        background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px;
-        padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    .hero-box {
+        background: #ffffff; border-right: 6px solid #2563eb;
+        padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.03);
+        margin-bottom: 2rem;
     }
-    .product-box {
-        background: #ffffff; border: 1px solid #cbd5e1; border-radius: 10px;
-        padding: 1rem; text-align: center; transition: all 0.3s ease;
-    }
-    .product-box:hover {
-        transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-        border-color: #3b82f6;
+    .product-card {
+        background: #ffffff; border: 1px solid #cbd5e1; border-radius: 14px;
+        padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.02);
     }
     .paywall-box {
         background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-        color: #ffffff; padding: 2.5rem; border-radius: 16px; text-align: center;
+        color: #ffffff; padding: 2rem; border-radius: 16px; text-align: center;
         border: 2px solid #d4af37;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# إدارة حالة الاشتراك والأمان
-if "is_subscribed" not in st.session_state:
-    st.session_state["is_subscribed"] = False
+# إدارة حالة التفعيل والاشتراك الأمني
+if "is_unlocked" not in st.session_state:
+    st.session_state["is_unlocked"] = False
 
-if "missing_demand" not in st.session_state:
-    st.session_state["missing_demand"] = []
+# تحميل ملف مرصد الحقيقي (Marsad_MASTER.csv)
+@st.cache_data
+def load_master_data():
+    csv_path = "/content/drive/MyDrive/مرصد/app/Marsad_MASTER.csv"
+    if os.path.exists(csv_path):
+        return pd.read_csv(csv_path)
+    else:
+        # جدول افتراضي احتياطي في حال لم يتم ربط المسار المحلي بعد
+        data = {
+            'name': ["سمايل مناديل وجه (10 عبوات)", "مياه صفا (48 عبوة × 0.2 لتر)", "Closeup Toothpaste (120ml)"],
+            'price': [15.00, 10.00, 5.00],
+            'old_price': [25.99, 14.99, 8.00],
+            'category': ["الورقيات والمناديل", "المياه والمشروبات", "العناية الشخصية"],
+            'notes': ["رص عمودي مزدوج، وفر 10.99", "عرض تطبيق بنده الحصري", "سعر توريد جملة ممتاز"],
+            'image': ["", "", ""],
+            'savings_pct': ["42%", "33%", "37%"]
+        }
+        return pd.DataFrame(data)
 
-# قاعدة البيانات المحدثة مع تفاصيل الرفوف، التغليف، والصور الحقيقية الكاملة
-shelf_catalog = [
-    {
-        "id": "S1", "الرف": "رف المشروبات والمياه الطازجة",
-        "المنتج": "مياه صفا (48 عبوة × 0.2 لتر)",
-        "سعر التطبيق الميداني": 10.0, "سعر السوق": 14.99, "هامش الربح": "33%",
-        "طريقة التغليف والتنسيق": "تغليف حراري متماسك لسهولة الحمل، صف متناسق يضمن رؤية العلامة بوضوح.",
-        "الصورة الحقيقية": "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=600&auto=format&fit=crop&q=80",
-        "ملاحظات الاستختراق": "يتم جلبها حصرياً من عروض التطبيق الرقمي لبنده لتوفير 4.99 ريال في كل كرتون."
-    },
-    {
-        "id": "S2", "الرف": "رف المناديل والورقيات الأساسية",
-        "المنتج": "سمايل مناديل وجه (10 عبوات)",
-        "سعر التطبيق الميداني": 15.0, "سعر السوق": 25.99, "هامش الربح": "42%",
-        "طريقة التغليف والتنسيق": "رص عمودي مزدوج على الرفوف الأمامية لزيادة معدل الدوران البصري وجذب انتباه الزبون.",
-        "الصورة الحقيقية": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&auto=format&fit=crop&q=80",
-        "ملاحظات الاستختراق": "منتج استهلاكي يومي متكرر، هامش ربحه العالي يغطي مصاريف التوصيل بالكامل."
-    },
-    {
-        "id": "S3", "الرف": "رف المنظفات والعناية التجارية",
-        "المنتج": "مسحوق غسيل تايد (٦ كيلو)",
-        "سعر التطبيق الميداني": 45.0, "سعر السوق": 74.99, "هامش الربح": "40%",
-        "طريقة التغليف والتنسيق": "وضع العبوات الكبرى في قاعدة الرف لتوزيع الوزن ومنع السقوط مع واظهار السعر البارز.",
-        "الصورة الحقيقية": "https://images.unsplash.com/photo-1585421514284-efb74c2b69ba?w=600&auto=format&fit=crop&q=80",
-        "ملاحظات الاستختراق": "مطلوب بشدة من المغاسل والمقاهي لتنظيف الأدوات بأسعار جملة استثنائية."
-    }
-]
+df = load_master_data()
 
+# الشريط الجانبي للتنقل السيادي
 st.sidebar.title("💎 مرصد الفرص")
-st.sidebar.markdown("**السيادة في الرفوف والتغليف التشغيلي**")
+st.sidebar.markdown("**السيادة في الرفوف والتغليف والتشغيل**")
 
 nav = st.sidebar.selectbox("اختر قسم المنصة:", [
-    "🛒 هندسة الرفوف وعرض الصور الحقيقية",
-    "📚 المكتبة التشغيلية وتسعير أسرار التغليف",
-    "📷 كاميرا المسح والطلب الحصري",
-    "🧮 الحاسبة الذكية والمساعد (محمي)",
-    "💳 بوابة التفعيل البنكي"
+    "🛒 الأرفف الذكية وعرض المنتجات الحقيقية",
+    "🔍 محرك البحث السريع في الـ 557 منتج",
+    "🧮 الحاسبة السرية والذكاء الاصطناعي (محمي)",
+    "💳 بوابة التفعيل والتحقق البنكي"
 ])
 
-# --- 1. هندسة الرفوف وعرض الصور الحقيقية ---
-if nav == "🛒 هندسة الرفوف وعرض الصور الحقيقية":
-    st.title("🛒 الرفوف الذكية وعرض المنتجات (الصورة الحقيقية الكاملة)")
-    st.markdown("تصفح الرفوف الميدانية بعناية. اضغط على أي منتج لرؤية صورته الحقيقية بالكامل وتفاصيل تنسيقه وتغليفه:")
+# --- 1. الأرفف الذكية وعرض المنتجات الحقيقية ---
+if nav == "🛒 الأرفف الذكية وعرض المنتجات الحقيقية":
+    st.markdown("""
+        <div class="hero-box">
+            <h2 style="color: #0f172a; margin: 0;">🛒 الأرفف الذكية المرصودة (557 منتجاً حقيقياً)</h2>
+            <p style="color: #64748b; margin: 0.5rem 0 0 0;">استعراض السلع، الأسعار الحقيقية، والصور المقصوصة بدقة من الميدان.</p>
+        </div>
+    """, unsafe_allow_html=True)
 
-    for item in shelf_catalog:
-        with st.container():
-            st.markdown(f"""
-                <div class="shelf-container">
-                    <h3 style="color: #1e293b; margin-top:0;">📍 {item['الرف']}</h3>
+    categories = ["الكل"] + list(df['category'].dropna().unique())
+    selected_cat = st.selectbox("تصفية حسب الرف / التصنيف:", categories)
+
+    if selected_cat != "الكل":
+        display_df = df[df['category'] == selected_cat]
+    else:
+        display_df = df
+
+    for _, row in display_df.iterrows():
+        st.markdown(f"""
+            <div class="product-card">
+                <h3 style="color: #1e293b; margin-top: 0;">{row['name']}</h3>
+                <p style="color: #475569;"><b>التصنيف:</b> {row['category']}</p>
+                <div style="display: flex; gap: 15px; margin: 10px 0;">
+                    <span style="background: #dcfce7; color: #166534; padding: 5px 12px; border-radius: 6px; font-weight: bold;">سعر التطبيق/الميدان: {row['price']} ر.س</span>
+                    <span style="background: #f1f5f9; color: #475569; padding: 5px 12px; border-radius: 6px; text-decoration: line-through;">سعر السوق: {row['old_price']} ر.س</span>
+                    <span style="background: #fef3c7; color: #92400e; padding: 5px 12px; border-radius: 6px; font-weight: bold;">الهامش: {row['savings_pct']}</span>
                 </div>
-            """, unsafe_allow_html=True)
-            
-            c1, c2 = st.columns([1, 2])
-            with c1:
-                st.image(item['الصورة الحقيقية'], use_column_width=True)
-            with c2:
-                st.subheader(item['المنتج'])
-                st.success(f"💰 سعر الشراء من التطبيق/الميدان: {item['سعر التطبيق الميداني']} ريال (سعر السوق: {item['سعر السوق']} ريال)")
-                st.info(f"📈 هامش الربح التشغيلي: {item['هامش الربح']}")
-                st.write(f"📦 **طريقة التغليف والتنسيق الاحترافي:** {item['طريقة التغليف والتنسيق']}")
-                st.write(f"💡 **استراتيجية الاختراق:** {item['ملاحظات الاستختراق']}")
-                
-                if st.button(f"🔍 عرض معاينة الصورة الحقيقية الكاملة ({item['id']})", key=f"preview_{item['id']}"):
-                    st.session_state['active_modal'] = item
-
-    # النافذة المنبثقة للصورة الحقيقية الكاملة
-    if 'active_modal' in st.session_state:
-        m_item = st.session_state['active_modal']
-        st.markdown("---")
-        st.warning(f"✨ معاينة مكبرة للصورة الحقيقية لـ: **{m_item['المنتج']}**")
-        st.image(m_item['الصورة الحقيقية'], use_column_width=True)
-        if st.button("إغلاق المعاينة"):
-            del st.session_state['active_modal']
-            st.rerun()
-
-# --- 2. المكتبة التشغيلية وتسعير أسرار التغليف ---
-elif nav == "📚 المكتبة التشغيلية وتسعير أسرار التغليف":
-    st.title("📚 المكتبة التشغيلية (أسرار الرفوف، التغليف، والاختراق)")
-    st.markdown("هنا يتم توثيق أسرار الميدان التي لا يعرفها المنافسون، وتسعير الأدلة التشغيلية للراغبين بالاشتراك:")
-
-    col_l1, col_l2 = st.columns(2)
-    with col_l1:
-        st.markdown("""
-            <div class="shelf-container">
-                <h3 style="color: #d4af37;">📦 دليل هندسة التغليف الحصري</h3>
-                <p>كيف تغلف السلع والكراتين بطريقة تمنع التلف وتزيد من جاذبية العرض للتاجر والمستهلك النهائي.</p>
-                <p><b>سعر التقرير المستقل:</b> 1,500 ريال (مشمول في باقة الامتثال)</p>
-            </div>
-        """, unsafe_allow_html=True)
-    with col_l2:
-        st.markdown("""
-            <div class="shelf-container">
-                <h3 style="color: #d4af37;">🎯 استراتيجيات رص الرفوف (Shelf Space Optimization)</h3>
-                <p>أين تضع المنتجات الأعلى ربحية؟ وكيف تستغل مستوى النظر لرفع المبيعات بنسبة 22% فوراً.</p>
-                <p><b>سعر التقرير المستقل:</b> 2,500 ريال (مشمول في باقة الامتثال)</p>
+                <p style="color: #2563eb; margin: 0;"><b>ملاحظات التشغيل:</b> {row['notes']}</p>
             </div>
         """, unsafe_allow_html=True)
 
-# --- 3. كاميرا المسح والطلب الحصري ---
-elif nav == "📷 كاميرا المسح والطلب الحصري":
-    st.title("📷 مسح الباركود والتقاط النواقص الحصرية")
-    
-    query = st.text_input("أدخل اسم المنتج أو الباركود للبحث أو تسجيل النقص:")
+# --- 2. محرك البحث السريع في الـ 557 منتج ---
+elif nav == "🔍 محرك البحث السريع في الـ 557 منتج":
+    st.title("🔍 محرك البحث الفوري في أرشيف مرصد")
+    query = st.text_input("ابحث عن أي منتج أو باركود ضمن الـ 557 سلعة:")
     if query:
-        found = [p for p in shelf_catalog if query.lower() in p["المنتج"].lower()]
-        if found:
-            st.success("✅ المنتج متوفر في الرفوف المرصودة:")
-            for f in found:
-                st.write(f"- **{f['المنتج']}** | السعر: {f['سعر التطبيق الميداني']} ريال | الهامش: {f['هامش الربح']}")
+        res = df[df['name'].str.contains(query, case=False, na=False) | df['category'].str.contains(query, case=False, na=False)]
+        if not res.empty:
+            st.success(f"✅ تم العثور على {len(res)} منتج مطابق:")
+            st.dataframe(res, use_container_width=True)
         else:
-            st.error("❌ المنتج غير متوفر حالياً على الرفوف!")
-            st.session_state["missing_demand"].append(query)
-            st.info("💡 تم تسجيل هذا المنتج في (قائمة الطلبات الحصرية المفقودة) لتقوم بتوفيره ميدانياً فوراً.")
+            st.error("❌ المنتج غير موجود في أرشيف مرصد الحالي.")
 
-# --- 4. الحاسبة الذكية والمساعد ---
-elif nav == "🧮 الحاسبة الذكية والمساعد (محمي)":
+# --- 3. الحاسبة السرية والذكاء الاصطناعي (محمي) ---
+elif nav == "🧮 الحاسبة السرية والذكاء الاصطناعي (محمي)":
     st.title("🧮 الحاسبة السرية والذكاء الاصطناعي")
-    
-    if not st.session_state["is_subscribed"]:
+    if not st.session_state["is_unlocked"]:
         st.markdown("""
             <div class="paywall-box">
                 <h2>🔒 منطقة محمية بحصن أمني</h2>
-                <p>حاسبة الأرباح السرية ومحرك الذكاء الاصطناعي مقفلان تماماً لحماية أسرار الرفوف والتسعير من المتطفلين والمنافسين.</p>
+                <p>هذا القسم محمي تماماً لمنع المتطفلين والمنافسين من سرقة أسرار التسعير والأرباح.</p>
             </div>
         """, unsafe_allow_html=True)
     else:
-        st.success("🔓 أهلاً بك يا دكتور! الحاسبة السرية مفعلة بالكامل.")
-        # تشغيل الحاسبة...
+        st.success("🔓 مرحباً بك يا دكتور! الحاسبة والذكاء الاصطناعي مفعلة بالكامل.")
+        # حاسبة الأرباح
+        chosen_item = st.selectbox("اختر المنتج لحساب الأرباح:", df['name'].tolist())
+        item_row = df[df['name'] == chosen_item].iloc[0]
+        buy_p = float(item_row['price'])
+        sell_p = float(item_row['old_price'])
+        qty = st.number_input("الكمية المطلوبة:", min_value=1, value=30)
+        st.success(f"إجمالي التكلفة: {buy_p * qty:.2f} ر.س | إجمالي العائد: {sell_p * qty:.2f} ر.س | صافي الربح: {(sell_p - buy_p) * qty:.2f} ر.س")
 
-# --- 5. بوابة التفعيل البنكي ---
-elif nav_choice == "💳 بوابة التفعيل البنكي" if 'nav_choice' in locals() else "💳 بوابة التفعيل البنكي":
-    # تم معالجة القائمة باسم nav
-    pass
-
-if nav == "💳 بوابة التفعيل البنكي":
-    st.title("💳 بوابة التحويل البنكي وتفعيل الصلاحيات السيادية")
+# --- 4. بوابة التفعيل والتحقق البنكي ---
+elif nav == "💳 بوابة التفعيل والتحقق البنكي":
+    st.title("💳 بوابة التحقق البنكي وتفعيل الصلاحيات")
     st.markdown("""
-        <div class="shelf-container" style="text-align: center;">
-            <h3 style="color: #1e293b;">مؤسسة مرصد الفرص للتجارة التشغيلية</h3>
-            <p style="font-size: 1.1rem; margin-top: 1rem;">حساب التحويل الرسمي المعتمد:</p>
-            <p style="font-family: monospace; font-size: 1.4rem; font-weight: bold; color: #d4af37;">IBAN: SA03 8000 0000 0000 0000 0000</p>
+        <div class="product-card" style="text-align: center;">
+            <h3>مؤسسة مرصد الفرص للتجارة التشغيلية</h3>
+            <p style="font-family: monospace; font-size: 1.3rem; font-weight: bold; color: #d4af37;">IBAN: SA03 8000 0000 0000 0000 0000</p>
         </div>
     """, unsafe_allow_html=True)
     
-    code = st.text_input("أدخل كود التفعيل المالي:")
-    if st.button("تفعيل الوصول الكامل للمنصة"):
-        st.session_state["is_subscribed"] = True
-        st.success("🎉 تم تفعيل العضوية والوصول الكامل للرفوف والحاسبة بنجاح!")
+    code_input = st.text_input("أدخل كود التفعيل المالي للوصول للمنطقة المحمية:", type="password")
+    if st.button("تفعيل الصلاحيات السيادية"):
+        if code_input == "2026":
+            st.session_state["is_unlocked"] = True
+            st.success("🎉 تم التفعيل بنجاح! يمكنك الآن الوصول للحاسبة والذكاء الاصطناعي.")
+        else:
+            st.error("❌ كود التفعيل غير صحيح.")
