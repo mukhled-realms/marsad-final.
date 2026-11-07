@@ -10,54 +10,82 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 <style>
-/* نفس ستايل مرصد الفخم */
 :root{--navy:#0A2540;--navy-2:#0B3D91;--blue:#1E6FD9;--blue-soft:#E8F1FC;--white:#FFFFFF;--green:#12855A;--green-2:#1FB574;--gold:#D4AF37;--ink:#0E1B2C;--muted:#5B6B80;--line:#DCE6F2;--radius:20px;--shadow:0 12px 30px rgba(10,37,64,.12);--shadow-lg:0 24px 60px rgba(10,37,64,.22);}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Tajawal',system-ui,sans-serif;background:linear-gradient(135deg,#0A2540 0%,#061729 100%);color:var(--ink);line-height:1.7;display:flex;justify-content:center;align-items:center;min-height:100vh;overflow-x:hidden;}
 img{display:block;max-width:100%}button,input,select,textarea{font-family:inherit;font-size:inherit;outline:none;border:none}a{color:inherit;text-decoration:none}
 .phone{width:100%;max-width:430px;height:100vh;max-height:920px;background:#F4F7FC;border-radius:0;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow-lg);position:relative;}
 @media(min-width:520px){.phone{border-radius:38px;height:92vh;border:10px solid #0A1A2F;box-shadow:0 40px 100px rgba(0,0,0,.55)}}
+
+/* الهيدر */
 .app-header{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 70%,var(--blue) 120%);color:#fff;padding:16px 18px 14px;display:flex;align-items:center;justify-content:space-between;position:relative;overflow:hidden;flex-shrink:0;}
 .brand-mini{display:flex;align-items:center;gap:10px;position:relative;z-index:1}
 .brand-mini .logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--blue),var(--green));display:grid;place-items:center;font-weight:900;font-size:18px;}
 .brand-mini b{font-size:16px;font-weight:900;line-height:1.1}.brand-mini span{display:block;font-size:10px;letter-spacing:1.5px;opacity:.85}
 .header-actions{display:flex;gap:8px;position:relative;z-index:1}
-.h-btn{width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.22);display:grid;place-items:center;cursor:pointer;color:#fff;transition:.2s;backdrop-filter:blur(8px);}
-.location-bar{background:#fff;padding:8px 18px;display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);border-bottom:1px solid var(--line);flex-shrink:0;}
-.location-bar .dot-live{width:8px;height:8px;border-radius:50%;background:var(--green-2);box-shadow:0 0 0 4px rgba(31,181,116,.18);animation:pulse2 2s infinite}
+.h-btn{width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.22);display:grid;place-items:center;cursor:pointer;color:#fff;transition:.2s;}
+.h-btn:hover{background:rgba(255,255,255,.28)}
+
+/* شريط الحالة */
+.status-bar{background:#fff;padding:8px 18px;display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:var(--muted);border-bottom:1px solid var(--line);flex-shrink:0;}
+.status-bar .dot-live{width:8px;height:8px;border-radius:50%;background:var(--green-2);box-shadow:0 0 0 4px rgba(31,181,116,.18);animation:pulse2 2s infinite;display:inline-block;margin-left:5px;}
 @keyframes pulse2{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* الشريط المتحرك */
+.ticker-wrap {width: 100%; overflow: hidden; background: var(--navy); color: var(--gold); padding: 8px 0; font-size: 12px; font-weight: 700; white-space: nowrap; border-bottom: 1px solid var(--line);}
+.ticker {display: inline-block; padding-left: 100%; animation: ticker 20s linear infinite;}
+@keyframes ticker {0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); }}
+
+/* الشاشة */
 .screen{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:90px;}
 .page{display:none;padding:18px 18px 20px;animation:fadeIn .35s ease}.page.active{display:block}
 @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* الهيرو */
 .hero-card{position:relative;border-radius:var(--radius);overflow:hidden;background:linear-gradient(135deg,#0B3D91 0%,#0A2540 100%);color:#fff;padding:22px 20px 26px;margin-bottom:16px;box-shadow:var(--shadow);}
-.hero-card .content{position:relative;z-index:2}.hero-card h2{font-size:22px;font-weight:900;line-height:1.35}.hero-card h2 em{font-style:normal;color:#8CF0C0}
+.hero-card h2{font-size:22px;font-weight:900;line-height:1.35}.hero-card h2 em{font-style:normal;color:#8CF0C0}
 .hero-card p{font-size:13.5px;opacity:.85;margin-top:8px;max-width:280px}
-.hero-card .badges{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
-.hero-card .badge-pill{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:5px 12px;font-size:11.5px;font-weight:600;backdrop-filter:blur(6px);}
+
+/* بطاقات المنتجات */
 .sec-title{font-size:18px;font-weight:900;color:var(--navy);margin:22px 0 12px;display:flex;align-items:center;justify-content:space-between}
 .svc-list{display:flex;flex-direction:column;gap:11px}
-.svc{background:#fff;border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:14px;box-shadow:0 4px 14px rgba(10,37,64,.06);border:1px solid var(--line);transition:.25s;position:relative;}
+.svc{background:#fff;border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:14px;box-shadow:0 4px 14px rgba(10,37,64,.06);border:1px solid var(--line);transition:.25s;cursor:pointer;}
 .svc:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:#C6DBF5}
 .svc .icon-box{width:52px;height:52px;border-radius:14px;flex-shrink:0;display:grid;place-items:center;font-size:24px;background:linear-gradient(135deg,var(--blue-soft),#D6E7FB);}
 .svc .info{flex:1;min-width:0}.svc .info b{display:block;font-size:15px;font-weight:900;color:var(--navy)}.svc .info span{font-size:12px;color:var(--muted)}
 .svc .price-tag{font-size:17px;font-weight:900;color:var(--blue);display:flex;align-items:baseline;gap:3px;flex-shrink:0;}
 .svc .price-tag small{font-size:11px;font-weight:500;color:var(--muted)}
+
+/* السلة */
+.cart-items{background:#fff;border-radius:16px;padding:15px;box-shadow:var(--shadow);border:1px solid var(--line);margin-bottom:15px;}
+.cart-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
+.cart-item:last-child{border-bottom:none;}
+.cart-total{font-weight:900;color:var(--green);font-size:16px;margin-top:10px;text-align:left;}
+.qty-btn{background:var(--blue-soft);color:var(--blue);border:1px solid #C6DBF5;border-radius:6px;width:28px;height:28px;font-weight:900;cursor:pointer;}
+
+/* النماذج */
 .form-card{background:#fff;border-radius:18px;padding:20px;box-shadow:var(--shadow);border:1px solid var(--line)}
-.field{margin-bottom:14px}.field label{display:block;font-size:13px;font-weight:700;color:var(--navy);margin-bottom:6px}.field label .req{color:#E03131}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;font-weight:700;color:var(--navy);margin-bottom:6px}
 .field input,.field select,.field textarea{width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;background:#FBFDFF;transition:.2s;color:var(--ink);font-size:14.5px;}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 4px rgba(30,111,217,.1);}
 .row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* الأزرار */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;border-radius:14px;font-weight:700;font-size:14.5px;cursor:pointer;transition:.22s;border:1.5px solid transparent;}
-.btn:active{transform:scale(.97)}.btn-primary{background:linear-gradient(135deg,var(--blue),var(--navy-2));color:#fff;box-shadow:0 10px 22px rgba(30,111,217,.3)}
-.btn-wa{background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;box-shadow:0 10px 22px rgba(18,140,126,.3)}
-.btn-ghost{background:#fff;color:var(--navy);border-color:var(--line)}.btn-block{width:100%}
-.map-box{border-radius:16px;overflow:hidden;height:220px;margin-bottom:16px;box-shadow:var(--shadow);border:1px solid var(--line);position:relative;}
+.btn-primary{background:linear-gradient(135deg,var(--blue),var(--navy-2));color:#fff;box-shadow:0 10px 22px rgba(30,111,217,.3)}
+.btn-block{width:100%}
+
+/* الشريط السفلي */
 .bottom-nav{position:absolute;bottom:0;left:0;right:0;background:rgba(255,255,255,.97);backdrop-filter:blur(20px);border-top:1px solid var(--line);display:flex;justify-content:space-around;align-items:center;padding:8px 6px 12px;z-index:50;}
 .bnav-item{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;padding:6px 4px;border-radius:12px;cursor:pointer;transition:.2s;color:var(--muted);background:none;font-size:10.5px;font-weight:700;}
 .bnav-item.active{color:var(--blue)}
 
-/* الشات بوت الذكي */
-#botToggle{position:fixed;bottom:96px;left:calc(50% - 195px);z-index:200;width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--blue),var(--navy-2) 60%,var(--green) 140%);box-shadow:0 12px 30px rgba(11,61,145,.45);transition:.28s;}
+/* الخريطة */
+.map-box{border-radius:16px;overflow:hidden;height:220px;margin-bottom:16px;box-shadow:var(--shadow);border:1px solid var(--line);position:relative;}
+
+/* الشات بوت */
+#botToggle{position:fixed;bottom:96px;left:calc(50% - 195px);z-index:200;width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--blue),var(--navy-2) 60%,var(--green) 140%);box-shadow:0 12px 30px rgba(11,61,145,.45);transition:.28s;font-size:24px;}
 @media(max-width:520px){#botToggle{left:18px;bottom:96px;width:56px;height:56px}}
 #botPanel{position:fixed;bottom:160px;left:calc(50% - 215px);z-index:200;width:min(400px,calc(100vw - 30px));height:min(560px,calc(100vh - 200px));background:#fff;border-radius:22px;overflow:hidden;display:none;flex-direction:column;box-shadow:0 30px 70px rgba(10,37,64,.5);border:1px solid var(--line);}
 @media(max-width:520px){#botPanel{left:15px;right:15px;bottom:160px;width:auto;height:min(520px,calc(100vh - 220px))}}
@@ -74,6 +102,9 @@ img{display:block;max-width:100%}button,input,select,textarea{font-family:inheri
 .bot-input{display:flex;gap:6px;padding:10px 12px;background:#fff;border-top:1px solid var(--line)}
 .bot-input input{flex:1;padding:10px 14px;border:1.5px solid var(--line);border-radius:999px;background:#FBFDFF;font-size:13.5px}
 .bot-input button{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--navy-2));color:#fff;display:grid;place-items:center;}
+
+/* زر المشاركة */
+.share-btn {position:absolute; bottom:20px; right:20px; background:var(--navy); color:var(--white); padding:10px 15px; border-radius:999px; font-size:12px; font-weight:700; box-shadow:var(--shadow); display:flex; align-items:center; gap:5px; cursor:pointer; z-index:100;}
 </style>
 </head>
 <body>
@@ -87,7 +118,12 @@ img{display:block;max-width:100%}button,input,select,textarea{font-family:inheri
     </div>
   </header>
 
-  <div class="location-bar"><span class="dot-live"></span><span>📍 نخدم الرياض · أسعار الجملة</span></div>
+  <div class="status-bar">
+    <div><span class="dot-live"></span> مدير العمليات: متواجد الآن</div>
+    <div id="loginTime">دخلت: --:--</div>
+  </div>
+
+  <div class="ticker-wrap"><div class="ticker">🔥 عروض الأسبوع: خصم خاص على كراتين المياه والمنظفات! | 🚚 توصيل سريع لجميع أحياء الرياض | 💳 بطاقات رقمية متوفرة الآن |</div></div>
 
   <main class="screen" id="screen">
     <section class="page active" id="page-home">
@@ -98,19 +134,15 @@ img{display:block;max-width:100%}button,input,select,textarea{font-family:inheri
         </div>
       </div>
       <div class="sec-title">🛒 المنتجات المتوفرة <a href="#" data-nav="booking">اطلب الآن ←</a></div>
-      <div class="svc-list" id="productList">
-        <p style="text-align:center; padding:20px;">جاري تحميل المنتجات...</p>
-      </div>
+      <div class="svc-list" id="productList"></div>
     </section>
 
     <section class="page" id="page-booking">
-      <h3 style="font-size:19px;font-weight:900;color:var(--navy);margin-bottom:14px">📝 اطلب طلبك</h3>
-      <div class="form-card">
+      <h3 style="font-size:19px;font-weight:900;color:var(--navy);margin-bottom:14px">🛒 سلة الطلبات</h3>
+      <div class="cart-items" id="cartList"><p style="text-align:center; color:var(--muted);">السلة فارغة</p></div>
+      <div class="cart-total" id="cartTotal" style="display:none;"></div>
+      <div class="form-card" style="margin-top:15px;">
         <form id="bookingForm">
-          <div class="field">
-            <label>المنتج <span class="req">*</span></label>
-            <select id="bService" required></select>
-          </div>
           <div class="row-2">
             <div class="field"><label>اسم المحل <span class="req">*</span></label><input id="bName" type="text" placeholder="اسم النشاط" required></div>
             <div class="field"><label>الجوال <span class="req">*</span></label><input id="bPhone" type="tel" placeholder="05XXXXXXXX" required></div>
@@ -120,18 +152,19 @@ img{display:block;max-width:100%}button,input,select,textarea{font-family:inheri
             <div class="field"><label>نوع النشاط</label><select id="bCar"><option>بقالة</option><option>مطعم</option><option>كافيه</option></select></div>
             <div class="field"><label>الوقت</label><input id="bTime" type="time" value="18:00" required></div>
           </div>
-          <button class="btn btn-primary btn-block" type="submit">✅ تأكيد الطلب</button>
+          <button class="btn btn-primary btn-block" type="submit">✅ إرسال الطلب عبر واتساب</button>
         </form>
-        <div id="bookingResult" style="margin-top:15px;"></div>
       </div>
       <div class="sec-title">📍 موقعك <span class="line"></span></div>
       <div class="map-box" id="map"></div>
     </section>
   </main>
 
+  <div class="share-btn" onclick="shareStore()"><span>🔗</span> شارك المنصة</div>
+
   <nav class="bottom-nav">
     <button class="bnav-item active" data-nav="home"><span class="bico">🏠</span><span>الرئيسية</span></button>
-    <button class="bnav-item" data-nav="booking"><span class="bico">🛒</span><span>اطلب</span></button>
+    <button class="bnav-item" data-nav="booking"><span class="bico">🛒</span><span>السلة (<span id="cartCount">0</span>)</span></button>
   </nav>
 </div>
 
@@ -139,12 +172,10 @@ img{display:block;max-width:100%}button,input,select,textarea{font-family:inheri
 <div id="botPanel">
   <div class="bot-head">
     <div class="av">🤖</div>
-    <div><b>مساعد مرصد الذكي</b><br><small>متصل · يرد فوراً</small></div>
+    <div><b>مساعد مرصد</b><br><small>متصل · يرد فوراً</small></div>
     <button class="close" id="botClose">✕</button>
   </div>
-  <div class="bot-msgs" id="botMsgs">
-    <div class="msg bot">أهلاً بك في مرصد! اختر منتجك واطلبه مباشرة.</div>
-  </div>
+  <div class="bot-msgs" id="botMsgs"><div class="msg bot">أهلاً بك في مرصد! اختر منتجك واطلبه مباشرة.</div></div>
   <div class="bot-quick">
     <button class="chip" onclick="botReply('كم سعر الموية؟')">كم سعر الموية؟</button>
     <button class="chip" onclick="botReply('كيف أطلب؟')">كيف أطلب؟</button>
@@ -158,22 +189,26 @@ img{display:block;max-width:100%}button,input,select,textarea{font-family:inheri
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  // 1. قراءة المنتجات من ملف الـ CSV
   let allProducts = [];
+  let cart = [];
+  const YEMENI_PHONE = "966532340613";
+  const ADMIN_PHONE = "966592859590"; 
+
+  const now = new Date();
+  document.getElementById('loginTime').innerText = `دخلت: ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+
   Papa.parse("Marsad_Valid_Products.csv", {
-    download: true,
-    header: true,
+    download: true, header: true,
     complete: function(results) {
       allProducts = results.data.filter(row => row['اسم المنتج'] && row['السعر']);
       renderProducts();
-      fillSelect();
     }
   });
 
   function renderProducts() {
     const list = document.getElementById('productList');
     list.innerHTML = '';
-    allProducts.slice(0, 15).forEach(p => {
+    allProducts.slice(0, 15).forEach((p, index) => {
       const name = p['اسم المنتج'];
       const price = parseFloat(p['السعر']).toFixed(2);
       const icon = p['القطاع'] === 'بطاقة رقمية' ? '💳' : '📦';
@@ -184,26 +219,54 @@ img{display:block;max-width:100%}button,input,select,textarea{font-family:inheri
         <div class="info"><b>${name}</b><span>${p['القطاع'] || 'بقالة'}</span></div>
         <div class="price-tag">${price}<small>ريال</small></div>
       `;
-      div.onclick = () => {
-        document.querySelector('[data-nav="booking"]').click();
-        document.getElementById('bService').value = name;
-      };
+      div.onclick = () => addToCart(name, price);
       list.appendChild(div);
     });
   }
 
-  function fillSelect() {
-    const select = document.getElementById('bService');
-    select.innerHTML = '';
-    allProducts.forEach(p => {
-      const opt = document.createElement('option');
-      opt.value = p['اسم المنتج'];
-      opt.textContent = `${p['اسم المنتج']} — ${parseFloat(p['السعر']).toFixed(2)} ر.س`;
-      select.appendChild(opt);
-    });
+  function addToCart(name, price) {
+    const existing = cart.find(item => item.name === name);
+    if (existing) existing.qty += 1; else cart.push({ name, price, qty: 1 });
+    updateCartUI();
+    document.querySelector('[data-nav="booking"]').click();
   }
 
-  // 2. التنقل بين الصفحات
+  function updateCartUI() {
+    const cartList = document.getElementById('cartList');
+    const cartTotal = document.getElementById('cartTotal');
+    const cartCount = document.getElementById('cartCount');
+    
+    if (cart.length === 0) {
+      cartList.innerHTML = '<p style="text-align:center; color:var(--muted);">السلة فارغة</p>';
+      cartTotal.style.display = 'none'; cartCount.innerText = 0; return;
+    }
+
+    cartList.innerHTML = '';
+    let total = 0;
+    cart.forEach((item, index) => {
+      total += item.price * item.qty;
+      cartList.innerHTML += `
+        <div class="cart-item">
+          <div>${item.name}</div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button class="qty-btn" onclick="changeQty(${index}, -1)">-</button>
+            <span>${item.qty}</span>
+            <button class="qty-btn" onclick="changeQty(${index}, 1)">+</button>
+          </div>
+        </div>
+      `;
+    });
+    cartTotal.innerText = `الإجمالي: ${total.toFixed(2)} ر.س`;
+    cartTotal.style.display = 'block';
+    cartCount.innerText = cart.reduce((sum, item) => sum + item.qty, 0);
+  }
+
+  function changeQty(index, change) {
+    cart[index].qty += change;
+    if (cart[index].qty <= 0) cart.splice(index, 1);
+    updateCartUI();
+  }
+
   document.querySelectorAll('[data-nav]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
@@ -214,66 +277,65 @@ img{display:block;max-width:100%}button,input,select,textarea{font-family:inheri
     });
   });
 
-  // 3. الخريطة
   setTimeout(() => {
     const map = L.map('map').setView([24.7136, 46.6753], 11);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
   }, 500);
 
-  // 4. الطلب عبر الواتساب
   document.getElementById('bookingForm').addEventListener('submit', (e) => {
     e.preventDefault();
-    const product = document.getElementById('bService').value;
+    if (cart.length === 0) { alert('السلة فارغة!'); return; }
+    
     const name = document.getElementById('bName').value;
     const phone = document.getElementById('bPhone').value;
     const location = document.getElementById('bLocation').value;
+    const type = document.getElementById('bCar').value;
     const time = document.getElementById('bTime').value;
+
+    let orderDetails = cart.map(item => `- ${item.name} (الكمية: ${item.qty})`).join('\n');
+    let total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0).toFixed(2);
+
+    const msg = `مرحباً مرصد، طلب جديد:\n👤 المحل: ${name}\n📱 الجوال: ${phone}\n📍 الموقع: ${location}\n🏢 النشاط: ${type}\n🕐 الوقت: ${time}\n\n📦 الطلبات:\n${orderDetails}\n\n💰 الإجمالي: ${total} ر.س`;
     
-    const msg = `مرحباً مرصد، طلب جديد:\n📦 المنتج: ${product}\n👤 المحل: ${name}\n📱 الجوال: ${phone}\n📍 الموقع: ${location}\n🕐 الوقت: ${time}`;
-    const waURL = `https://wa.me/966532340613?text=${encodeURIComponent(msg)}`;
+    window.open(`https://wa.me/${YEMENI_PHONE}?text=${encodeURIComponent(msg)}`, '_blank');
+    setTimeout(() => { window.open(`https://wa.me/${ADMIN_PHONE}?text=${encodeURIComponent(msg)}`, '_blank'); }, 1500);
     
-    document.getElementById('bookingResult').innerHTML = `
-      <div class="alert alert-ok" style="background:#E6F7EF; padding:15px; border-radius:10px; text-align:center; margin-top:15px;">
-        <b>✅ تم تجهيز طلبك!</b><br>
-        <a href="${waURL}" target="_blank" class="btn btn-wa" style="margin-top:10px;">📱 إرسال الطلب للواتساب</a>
-      </div>`;
+    cart = [];
+    updateCartUI();
+    alert("تم إرسال طلبك بنجاح! سيتواصل معك اليمني.");
   });
 
-  // 5. الذكاء الاصطناعي (Chatbot) الذكي
   function botReply(text) {
     const msgs = document.getElementById('botMsgs');
     msgs.innerHTML += `<div class="msg user">${text}</div>`;
-    let reply = "";
-
-    // محاكاة الذكاء الاصطناعي (ردود ذكية)
-    if (text.includes('سعر') || text.includes('بكم') || text.includes('موية')) {
-      reply = "💧 سعر كرتون الموية يبدأ من 11 ريال. تفضل بتصفح المنتجات في الصفحة الرئيسية!";
-    } else if (text.includes('أطلب') || text.includes('كيف')) {
-      reply = "📝 للطلب: اذهب لصفحة (اطلب)، اختر المنتج، اكتب اسم محلك وموقعك، واضغط تأكيد. سيصلك طلبك مباشرة عبر الواتساب.";
-    } else if (text.includes('تواصل') || text.includes('رقم') || text.includes('اليمني')) {
-      reply = "📞 للتواصل مع المورد (اليمني): \n+966 53 234 0613\nواتساب مباشر: https://wa.me/966532340613";
-    } else if (text.includes('متوفر') || text.includes('مخزون')) {
-      reply = "📦 جميع المنتجات المعروضة في الصفحة الرئيسية متوفرة حالياً. اختر منتجك وأتمم طلبك بثواني.";
-    } else if (text.includes('ترويج') || text.includes('عرض')) {
-      reply = "🔥 لدينا عروض على المياه والمنظفات! تفضل بتصفح المنتجات والأسعار.";
-    } else {
-      reply = "أهلاً بك في مرصد! 🌿 يمكنني مساعدتك في: معرفة الأسعار، طريقة الطلب، رقم التواصل، أو التأكد من توفر المنتجات. كيف أقدر أخدمك؟";
-    }
-
+    let reply = "أهلاً بك، اختر منتجك من السلة واطلبه.";
+    if (text.includes('سعر') || text.includes('بكم')) reply = "💧 سعر كرتون الموية يبدأ من 11 ريال.";
+    if (text.includes('أطلب')) reply = "📝 اذهب للسلة، اختر المنتجات، واملأ البيانات.";
+    if (text.includes('رقم') || text.includes('اليمني')) reply = "📞 للتواصل: +966 53 234 0613";
     setTimeout(() => {
       msgs.innerHTML += `<div class="msg bot">${reply}</div>`;
       msgs.scrollTop = msgs.scrollHeight;
-    }, 600);
+    }, 500);
   }
-
   document.getElementById('botToggle').onclick = () => document.getElementById('botPanel').classList.add('open');
   document.getElementById('botClose').onclick = () => document.getElementById('botPanel').classList.remove('open');
-
   function sendBot() {
     const val = document.getElementById('botText').value;
     if (!val) return;
     botReply(val);
     document.getElementById('botText').value = '';
+  }
+
+  function shareStore() {
+    if (navigator.share) {
+      navigator.share({
+        title: 'منصة مرصد للتوريد',
+        text: 'اطلب احتياجات محلك بالجملة من مرصد!',
+        url: window.location.href,
+      });
+    } else {
+      alert('انسخ الرابط وشاركه: ' + window.location.href);
+    }
   }
 </script>
 </body>
