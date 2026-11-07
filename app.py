@@ -1,259 +1,440 @@
-import streamlit as st
-import pandas as pd
-import os
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>مرصد | MARSAD - توريد الجملة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+<style>
+:root{--navy:#0A2540;--navy-2:#0B3D91;--blue:#1E6FD9;--blue-soft:#E8F1FC;--white:#FFFFFF;--green:#12855A;--green-2:#1FB574;--gold:#D4AF37;--ink:#0E1B2C;--muted:#5B6B80;--line:#DCE6F2;--radius:20px;--shadow:0 12px 30px rgba(10,37,64,.12);--shadow-lg:0 24px 60px rgba(10,37,64,.22);}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Tajawal',system-ui,sans-serif;background:linear-gradient(135deg,#0A2540 0%,#061729 100%);color:var(--ink);line-height:1.7;display:flex;justify-content:center;align-items:center;min-height:100vh;overflow-x:hidden;}
+img{display:block;max-width:100%}button,input,select,textarea{font-family:inherit;font-size:inherit;outline:none;border:none}a{color:inherit;text-decoration:none}
+.phone{width:100%;max-width:430px;height:100vh;max-height:920px;background:#F4F7FC;border-radius:0;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow-lg);position:relative;}
+@media(min-width:520px){.phone{border-radius:38px;height:92vh;border:10px solid #0A1A2F;box-shadow:0 40px 100px rgba(0,0,0,.55)}}
 
-# إعداد المنصة السيادية المتقدمة
-st.set_page_config(
-    page_title="مرصد الفرص السيادي | المنصة التشغيلية المتقدمة",
-    page_icon="💎",
-    layout="wide"
-)
+/* الهيدر */
+.app-header{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 70%,var(--blue) 120%);color:#fff;padding:16px 18px 14px;display:flex;align-items:center;justify-content:space-between;position:relative;overflow:hidden;flex-shrink:0;}
+.brand-mini{display:flex;align-items:center;gap:10px;position:relative;z-index:1;cursor:pointer;}
+.brand-mini .logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--blue),var(--green));display:grid;place-items:center;font-weight:900;font-size:18px;overflow:hidden;padding:2px;}
+.brand-mini .logo img{width:100%;height:100%;object-fit:cover;border-radius:9px;}
+.brand-mini b{font-size:16px;font-weight:900;line-height:1.1}
+.brand-mini span{display:block;font-size:10px;letter-spacing:1.5px;opacity:.85}
+.header-actions{display:flex;gap:8px;position:relative;z-index:1}
+.h-btn{width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.22);display:grid;place-items:center;cursor:pointer;color:#fff;transition:.2s;}
+.h-btn:hover{background:rgba(255,255,255,.28)}
 
-# تخصيص التصميم البصري الخرافي (خلفيات رفوف مموهة ومظلمة، فخامة مطلقة)
-st.markdown("""
-    <style>
-    .stApp {
-        background: linear-gradient(rgba(15, 23, 42, 0.92), rgba(15, 23, 42, 0.96)), 
-                    url('https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=1600&q=80');
-        background-size: cover;
-        background-position: center;
-        background-attachment: fixed;
-        color: #f8fafc;
-    }
-    .hero-banner {
-        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-        border: 2px solid #d4af37; padding: 2rem; border-radius: 20px;
-        box-shadow: 0 15px 35px -5px rgba(212, 175, 55, 0.25);
-        margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;
-    }
-    .shelf-category-box {
-        background: rgba(30, 41, 59, 0.85); border-left: 6px solid #3b82f6;
-        padding: 1.5rem; border-radius: 14px; margin-bottom: 1.5rem;
-        backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05);
-    }
-    .product-row-card {
-        background: rgba(15, 23, 42, 0.8); border: 1px solid #334155; border-radius: 12px;
-        padding: 1.2rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;
-        transition: all 0.3s ease;
-    }
-    .product-row-card:hover {
-        border-color: #d4af37; transform: translateX(-5px);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.6);
-    }
-    .game-card-pkg {
-        background: rgba(30, 41, 59, 0.9); border: 2px solid #d4af37; border-radius: 16px;
-        padding: 1.8rem; text-align: center; transition: all 0.3s ease;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-    }
-    .game-card-pkg:hover {
-        transform: translateY(-8px); border-color: #60a5fa;
-        box-shadow: 0 15px 30px rgba(59, 130, 246, 0.3);
-    }
-    .paywall-box {
-        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-        color: #ffffff; padding: 2.5rem; border-radius: 18px; text-align: center;
-        border: 2px solid #d4af37; box-shadow: 0 15px 30px rgba(0,0,0,0.7);
-    }
-    </style>
-""", unsafe_allow_html=True)
+/* شريط الحالة */
+.status-bar{background:#fff;padding:8px 18px;display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:var(--muted);border-bottom:1px solid var(--line);flex-shrink:0;}
+.status-bar .dot-live{width:8px;height:8px;border-radius:50%;background:var(--green-2);box-shadow:0 0 0 4px rgba(31,181,116,.18);animation:pulse2 2s infinite;display:inline-block;margin-left:5px;}
+@keyframes pulse2{0%,100%{opacity:1}50%{opacity:.4}}
 
-# إدارة حالة الأمان والتفعيل
-if "is_unlocked" not in st.session_state:
-    st.session_state["is_unlocked"] = False
+/* الشريط المتحرك */
+.ticker-wrap {width: 100%; overflow: hidden; background: var(--navy); color: var(--gold); padding: 8px 0; font-size: 12px; font-weight: 700; white-space: nowrap; border-bottom: 1px solid var(--line);}
+.ticker {display: inline-block; padding-left: 100%; animation: ticker 20s linear infinite;}
+@keyframes ticker {0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); }}
 
-# الشريط الجانبي السيادي
-st.sidebar.title("💎 مرصد الفرص | مخلد")
-st.sidebar.markdown("**السيادة والتشغيل المتقدم**")
+/* الشاشة */
+.screen{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:90px;}
+.page{display:none;padding:18px 18px 20px;animation:fadeIn .35s ease}.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 
-nav = st.sidebar.selectbox("اختر قسم المنصة السيادية:", [
-    "🚀 الواجهة الرئيسية والتحليل الاستراتيجي",
-    "🛒 الأرفف الذكية المترتبة (الشاي، الشامبو، الحفاظات)",
-    "🎮 محطة الألعاب وباقات البطاقات الرقمية (50-700 ر.س)",
-    "📚 المكتبة التشغيلية وأسرار منع الخسائر",
-    "🧮 الحاسبة السرية والذكاء الاصطناعي (محمي)",
-    "💳 بوابة التفعيل والتحقق البنكي"
-])
+/* الهيرو */
+.hero-card{position:relative;border-radius:var(--radius);overflow:hidden;background:linear-gradient(135deg,#0B3D91 0%,#0A2540 100%);color:#fff;padding:22px 20px 26px;margin-bottom:16px;box-shadow:var(--shadow);}
+.hero-card h2{font-size:22px;font-weight:900;line-height:1.35}
+.hero-card h2 em{font-style:normal;color:#8CF0C0}
+.hero-card p{font-size:13.5px;opacity:.85;margin-top:8px;max-width:280px}
+.hero-card .badges{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.hero-card .badge-pill{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:5px 12px;font-size:11.5px;font-weight:600;}
 
-# --- 1. الواجهة الرئيسية والتحليل الاستراتيجي ---
-if nav == "🚀 الواجهة الرئيسية والتحليل الاستراتيجي":
-    col_h1, col_h2 = st.columns([3, 1])
-    with col_h1:
-        st.markdown("""
-            <div class="hero-banner">
-                <div>
-                    <h1 style="color: #d4af37; margin:0; font-size: 2.2rem;">مرصد الفرص | المنصة السيادية للتجارة التشغيلية</h1>
-                    <p style="color: #94a3b8; font-size: 1.1rem; margin-top: 0.8rem;">
-                        النظام الأسطوري المتقدم لتمكين الأسواق الكبرى، هندسة المشتريات، منع الخسائر، واختراق الأسعار ميدانياً بدون عمولات أو وسطاء. متجر يتجاوز عقلية المتاجر التقليدية بعشر سنوات!
-                    </p>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-    with col_h2:
-        st.markdown("""
-            <div style="background: rgba(30, 41, 59, 0.9); border: 2px solid #d4af37; padding: 1.5rem; border-radius: 16px; text-align: center;">
-                <h3 style="color: #60a5fa; margin:0;">🎮 محطة مخرج (Exit)</h3>
-                <p style="color: #cbd5e1; font-size: 0.85rem; margin-top: 5px;">شعار مرصد & مخلد</p>
-                <p style="color: #34d399; font-size: 0.8rem; font-weight: bold; margin-top: 5px;">قريباً الإصدار العالمي</p>
-            </div>
-        """, unsafe_allow_html=True)
-    
-    st.markdown("""
-        <div class="paywall-box" style="text-align: right; margin-top: 2rem;">
-            <h2 style="color: #d4af37; margin-top:0;">💡 رسالة استراتيجية لرواد الأسواق والمتاجر الكبرى</h2>
-            <p style="font-size: 1.1rem; lineHeight: 1.8; color: #cbd5e1;">
-                عندما يتصفح التاجر هذه المنصة، فإنه لا يرى مجرد سلع عادية، بل يرى <b>هندسة ميدانية حقيقية</b> تمنع الهدر، تقفل فجوات المخزون، وتوفر السلع من قلب عروض التطبيقات الرقمية الكبرى بهوامش ربح استثنائية. استقلالية كاملة عن منصات الوسطاء، وسيطرة تامة على الأصول الرقمية والتشغيلية.
-            </p>
+/* بطاقات المنتجات */
+.sec-title{font-size:18px;font-weight:900;color:var(--navy);margin:22px 0 12px;display:flex;align-items:center;justify-content:space-between}
+.svc-list{display:flex;flex-direction:column;gap:11px}
+.svc{background:#fff;border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:14px;box-shadow:0 4px 14px rgba(10,37,64,.06);border:1px solid var(--line);transition:.25s;cursor:pointer;}
+.svc:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:#C6DBF5}
+.svc .icon-box{width:52px;height:52px;border-radius:14px;flex-shrink:0;display:grid;place-items:center;font-size:24px;background:linear-gradient(135deg,var(--blue-soft),#D6E7FB);}
+.svc .info{flex:1;min-width:0}.svc .info b{display:block;font-size:15px;font-weight:900;color:var(--navy)}.svc .info span{font-size:12px;color:var(--muted)}
+.svc .price-tag{font-size:17px;font-weight:900;color:var(--blue);display:flex;align-items:baseline;gap:3px;flex-shrink:0;}
+
+/* السلة */
+.cart-items{background:#fff;border-radius:16px;padding:15px;box-shadow:var(--shadow);border:1px solid var(--line);margin-bottom:15px;}
+.cart-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
+.cart-item:last-child{border-bottom:none;}
+.cart-total{font-weight:900;color:var(--green);font-size:16px;margin-top:10px;text-align:left;}
+.qty-btn{background:var(--blue-soft);color:var(--blue);border:1px solid #C6DBF5;border-radius:6px;width:28px;height:28px;font-weight:900;cursor:pointer;}
+
+/* النماذج */
+.form-card{background:#fff;border-radius:18px;padding:20px;box-shadow:var(--shadow);border:1px solid var(--line)}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;font-weight:700;color:var(--navy);margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;background:#FBFDFF;transition:.2s;color:var(--ink);font-size:14.5px;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 4px rgba(30,111,217,.1);}
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* الأزرار */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;border-radius:14px;font-weight:700;font-size:14.5px;cursor:pointer;transition:.22s;border:1.5px solid transparent;}
+.btn-primary{background:linear-gradient(135deg,var(--blue),var(--navy-2));color:#fff;box-shadow:0 10px 22px rgba(30,111,217,.3)}
+.btn-block{width:100%}
+
+/* الشريط السفلي */
+.bottom-nav{position:absolute;bottom:0;left:0;right:0;background:rgba(255,255,255,.97);backdrop-filter:blur(20px);border-top:1px solid var(--line);display:flex;justify-content:space-around;align-items:center;padding:8px 6px 12px;z-index:50;}
+.bnav-item{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;padding:6px 4px;border-radius:12px;cursor:pointer;transition:.2s;color:var(--muted);background:none;font-size:10.5px;font-weight:700;}
+.bnav-item.active{color:var(--blue)}
+
+/* الشات بوت */
+#botToggle{position:fixed;bottom:96px;left:calc(50% - 195px);z-index:200;width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--blue),var(--navy-2) 60%,var(--green) 140%);box-shadow:0 12px 30px rgba(11,61,145,.45);transition:.28s;font-size:24px;}
+@media(max-width:520px){#botToggle{left:18px;bottom:96px;width:56px;height:56px}}
+#botPanel{position:fixed;bottom:160px;left:calc(50% - 215px);z-index:200;width:min(400px,calc(100vw - 30px));height:min(560px,calc(100vh - 200px));background:#fff;border-radius:22px;overflow:hidden;display:none;flex-direction:column;box-shadow:0 30px 70px rgba(10,37,64,.5);border:1px solid var(--line);}
+@media(max-width:520px){#botPanel{left:15px;right:15px;bottom:160px;width:auto;height:min(520px,calc(100vh - 220px))}}
+#botPanel.open{display:flex}
+.bot-head{background:linear-gradient(120deg,var(--navy),var(--navy-2) 60%,var(--green) 160%);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;}
+.bot-head .av{width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.16);display:grid;place-items:center;}
+.bot-head b{display:block;font-size:14px}.bot-head .close{margin-inline-start:auto;background:rgba(255,255,255,.15);border:none;color:#fff;width:28px;height:28px;border-radius:9px;}
+.bot-msgs{flex:1;overflow-y:auto;padding:14px;background:#F6FAFF;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:84%;padding:10px 14px;border-radius:14px;font-size:13.5px;line-height:1.7;white-space:pre-line}
+.msg.bot{background:#fff;border:1px solid var(--line);color:var(--ink);align-self:flex-start;}
+.msg.user{background:linear-gradient(135deg,var(--blue),var(--navy-2));color:#fff;align-self:flex-end;}
+.bot-quick{display:flex;gap:6px;flex-wrap:wrap;padding:8px 12px;background:#fff;border-top:1px solid var(--line);max-height:80px;overflow-y:auto}
+.chip{background:var(--blue-soft);color:var(--navy-2);border:1px solid #C6DBF5;border-radius:999px;padding:5px 11px;font-size:11.5px;cursor:pointer;font-weight:600;}
+.bot-input{display:flex;gap:6px;padding:10px 12px;background:#fff;border-top:1px solid var(--line)}
+.bot-input input{flex:1;padding:10px 14px;border:1.5px solid var(--line);border-radius:999px;background:#FBFDFF;font-size:13.5px}
+.bot-input button{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--navy-2));color:#fff;display:grid;place-items:center;}
+
+/* زر المشاركة */
+.share-btn {position:absolute; bottom:20px; right:20px; background:var(--navy); color:var(--white); padding:10px 15px; border-radius:999px; font-size:12px; font-weight:700; box-shadow:var(--shadow); display:flex; align-items:center; gap:5px; cursor:pointer; z-index:100;}
+
+/* لوحة اليمني (المخفية) */
+#yemeniPanel{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(10,37,64,0.95);z-index:1000;display:none;flex-direction:column;padding:20px;color:#fff;overflow-y:auto;}
+#yemeniPanel.open{display:flex;}
+.ym-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:1px solid var(--gold);padding-bottom:10px;}
+.ym-card{background:#fff;color:var(--ink);border-radius:12px;padding:15px;margin-bottom:10px;box-shadow:var(--shadow);}
+.ym-alert{background:#fff3cd;color:#856404;padding:10px;border-radius:8px;margin-bottom:10px;font-size:13px;border-right:4px solid #ffc107;}
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <!-- الهيدر -->
+  <header class="app-header">
+    <div class="brand-mini" id="secretAdminBtn">
+      <!-- الشعار في الهيدر -->
+      <div class="logo">
+        <img src="https://i.postimg.cc/Ss5m7ZJw/1793957238359.png" alt="MARSAD">
+      </div>
+      <div><b>مرصد | MARSAD</b><span>توريد الجملة</span></div>
+    </div>
+    <div class="header-actions">
+      <a class="h-btn" href="tel:+966532340613">📞</a>
+      <a class="h-btn" href="https://wa.me/966532340613" target="_blank">💬</a>
+    </div>
+  </header>
+
+  <!-- شريط الحالة -->
+  <div class="status-bar">
+    <div><span class="dot-live"></span> مدير العمليات: متواجد الآن</div>
+    <div id="loginTime">دخلت: --:--</div>
+  </div>
+
+  <!-- الشريط المتحرك -->
+  <div class="ticker-wrap"><div class="ticker">🔥 عروض الأسبوع: خصم خاص على كراتين المياه والمنظفات! | 🚚 توصيل سريع لجميع أحياء الرياض | 💳 بطاقات رقمية متوفرة الآن |</div></div>
+
+  <!-- الشاشات -->
+  <main class="screen" id="screen">
+    <section class="page active" id="page-home">
+      <div class="hero-card" style="text-align: center; padding-bottom: 25px;">
+        
+        <!-- الشعار في منتصف البطاقة -->
+        <img src="https://i.postimg.cc/Ss5m7ZJw/1793957238359.png" alt="شعار مرصد" style="width: 170px; margin: 0 auto 15px; display: block; border-radius: 20px; box-shadow: 0 0 25px rgba(31, 181, 116, 0.6); background: #fff; padding: 5px;">
+        
+        <div class="content">
+          <h2>وفّر في طلبات محلك.. <em>نوفرها لك بالجملة</em></h2>
+          <p style="margin: 10px auto 0; max-width: 280px;">اختر منتجك، حدد موقعك، وسنقوم بتوصيله إليك.</p>
         </div>
-    """, unsafe_allow_html=True)
+      </div>
+      <div class="sec-title">🛒 المنتجات المتوفرة <a href="#" data-nav="booking">اطلب الآن ←</a></div>
+      <div class="svc-list" id="productList"></div>
+    </section>
 
-# --- 2. الأرفف الذكية المترتبة (الشاي خلف الشاي، الشامبو خلف الشامبو، الحفاظات خلف الحفاظات) ---
-elif nav == "🛒 الأرفف الذكية المترتبة (الشاي، الشامبو، الحفاظات)":
-    st.title("🛒 الأرفف الذكية المترتبة بدقة متناهية")
-    st.markdown("تصنيف سحبي هندسي: كل منتج خلفه شبيهه (الشاي خلف الشاي، الشامبو خلف الشامبو، الحفاظات خلف الحفاظات) لضمان انسيابية العرض وسرعة القرار التشغيلي.")
+    <section class="page" id="page-booking">
+      <h3 style="font-size:19px;font-weight:900;color:var(--navy);margin-bottom:14px">🛒 سلة الطلبات</h3>
+      <div class="cart-items" id="cartList"><p style="text-align:center; color:var(--muted);">السلة فارغة</p></div>
+      <div class="cart-total" id="cartTotal" style="display:none;"></div>
 
-    # محاكاة لأقسام الأرفف المترتبة بدقة
-    shelf_sections = [
-        {"القسم": "☕ رف الشاي والمشروبات الساخنة", "الترتيب": "الشاي الفاخر خلف الشاي العادي بصفوف متناسقة", "المنتج": "شاي ليبتون براند (200 كيس)", "السعر": "38.00 ر.س", "السوق": "55.00 ر.س", "الهامش": "31%"},
-        {"القسم": "🧴 رف الشامبو والعناية الشخصية", "الترتيب": "الشامبو التجاري خلف شامبو الصالونات", "المنتج": "شامبو بانتين للعناية المكثفة (600مل)", "السعر": "18.50 ر.س", "السوق": "28.00 ر.س", "الهامش": "34%"},
-        {"القسم": "👶 رف الحفاظات ومستلزمات الأطفال", "الترتيب": "حفاظات بيبي جوي خلف بامبرز بترتيب مقاسات صارم", "المنتج": "حفاظات بيبي جوي مقاس 4 (كبير جداً)", "السعر": "65.00 ر.س", "السوق": "92.00 ر.س", "الهامش": "29%"},
-        {"القسم": "🧻 رف الورقيات والمناديل الأساسية", "الترتيب": "مناديل الوجه خلف الرول الكبير للمطاعم", "المنتج": "سمايل مناديل وجه (10 عبوات)", "السعر": "15.00 ر.س", "السوق": "25.99 ر.س", "الهامش": "42%"}
-    ]
+      <div class="form-card" style="margin-top:15px;">
+        <form id="bookingForm">
+          <div class="row-2">
+            <div class="field"><label>اسم المحل <span class="req">*</span></label><input id="bName" type="text" placeholder="اسم النشاط" required></div>
+            <div class="field"><label>الجوال <span class="req">*</span></label><input id="bPhone" type="tel" placeholder="05XXXXXXXX" required></div>
+          </div>
+          <div class="field"><label>الموقع / الحي <span class="req">*</span></label><input id="bLocation" type="text" placeholder="مثال: حي النظيم" required></div>
+          <div class="row-2">
+            <div class="field"><label>نوع النشاط</label><select id="bCar"><option>بقالة</option><option>مطعم</option><option>كافيه</option></select></div>
+            <div class="field"><label>الوقت</label><input id="bTime" type="time" value="18:00" required></div>
+          </div>
+          <button class="btn btn-primary btn-block" type="submit">✅ إرسال الطلب عبر واتساب</button>
+        </form>
+      </div>
+    </section>
+  </main>
 
-    for item in shelf_sections:
-        st.markdown(f"""
-            <div class="shelf-category-box">
-                <h3 style="color: #d4af37; margin-top:0;">📍 {item['القسم']}</h3>
-                <p style="color: #94a3b8; font-size: 0.9rem;"><b>هندسة الترتيب:</b> {item['الترتيب']}</p>
-                <div class="product-row-card">
-                    <div>
-                        <h4 style="color: #f8fafc; margin:0;">{item['منتج'] if 'منتج' in item else item['المنتج']}</h4>
-                        <span style="color: #34d399; font-weight: bold;">سعر الميدان: {item['السعر']}</span> | 
-                        <span style="color: #94a3b8; text-decoration: line-through;">سعر السوق: {item['السوق']}</span>
-                    </div>
-                    <div style="background: rgba(212, 175, 55, 0.2); color: #d4af37; padding: 6px 14px; border-radius: 8px; font-weight: bold;">
-                        هامش الربح: {item['الهامش']}
-                    </div>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
+  <div class="share-btn" onclick="shareStore()"><span>🔗</span> شارك المنصة</div>
 
-# --- 3. محطة الألعاب وباقات البطاقات الرقمية ---
-elif nav == "🎮 محطة الألعاب وباقات البطاقات الرقمية (50-700 ر.س)":
-    col_g1, col_g2 = st.columns([2, 1])
-    with col_g1:
-        st.title("🎮 محطة الألعاب السيادية (مخرج / Exit)")
-        st.markdown("عالم من الغموض، التحدي، وأكواد التشغيل السرية التي تدفع اللاعب للشراء بحماس جنوني.")
-    with col_g2:
-        st.markdown("""
-            <div style="background: rgba(30, 41, 59, 0.9); border: 1px dashed #d4af37; padding: 1rem; border-radius: 12px; text-align: center;">
-                <h4 style="color: #60a5fa; margin:0;">شعار مخلد & مرصد</h4>
-                <p style="color: #cbd5e1; font-size: 0.8rem; margin-top: 4px;">الهوية الرقمية المستقلة</p>
-            </div>
-        """, unsafe_allow_html=True)
+  <nav class="bottom-nav">
+    <button class="bnav-item active" data-nav="home"><span class="bico">🏠</span><span>الرئيسية</span></button>
+    <button class="bnav-item" data-nav="booking"><span class="bico">🛒</span><span>السلة (<span id="cartCount">0</span>)</span></button>
+    <button class="bnav-item" onclick="openBook()"><span class="bico">📖</span><span>الكتاب</span></button>
+  </nav>
+</div>
 
-    st.markdown("### 💳 باقات البطاقات الرقمية الخاصة بالألعاب (الأسعار المعتمدة)")
+<!-- الشات بوت -->
+<button id="botToggle">🤖</button>
+<div id="botPanel">
+  <div class="bot-head">
+    <div class="av">🤖</div>
+    <div><b id="botTitle">مساعد مرصد</b><br><small id="botSubtitle">متصل · يرد فوراً</small></div>
+    <button class="close" id="botClose">✕</button>
+  </div>
+  <div class="bot-msgs" id="botMsgs"><div class="msg bot">أهلاً بك في مرصد! اختر منتجك واطلبه مباشرة.</div></div>
+  <div class="bot-quick" id="botQuickChips">
+    <button class="chip" onclick="botReply('كم سعر الموية؟')">كم سعر الموية؟</button>
+    <button class="chip" onclick="botReply('كيف أطلب؟')">كيف أطلب؟</button>
+    <button class="chip" onclick="botReply('أبي رقم اليمني')">أبي رقم اليمني</button>
+  </div>
+  <div class="bot-input">
+    <input id="botText" type="text" placeholder="اكتب سؤالك هنا..." />
+    <button onclick="sendBot()">➤</button>
+  </div>
+</div>
+
+<!-- لوحة اليمني المخفية -->
+<div id="yemeniPanel">
+  <div class="ym-header">
+    <h2>🛡️ لوحة مدير العمليات (اليمني)</h2>
+    <button onclick="closeYemeni()" style="background:red;color:#fff;padding:5px 10px;border-radius:5px;">إغلاق</button>
+  </div>
+  <div id="yemeniAlerts">
+    <div class="ym-alert">🔔 لا توجد إشعارات جديدة حتى الآن.</div>
+  </div>
+  <h3 style="margin-bottom:10px;">📊 إحصائيات حية</h3>
+  <div class="ym-card">
+    <b>عدد الزوار الحاليين:</b> <span id="ymVisitors">1</span> (أنت)<br>
+    <b>عدد عمليات الشراء اليوم:</b> <span id="ymSalesCount">0</span><br>
+    <b>إجمالي المبيعات:</b> <span id="ymSalesTotal">0.00</span> ر.س
+  </div>
+</div>
+
+<script>
+  // 1. إعدادات النظام
+  let allProducts = [];
+  let cart = [];
+  const YEMENI_PHONE = "966532340613";
+  const ADMIN_PHONE = "966592859590"; 
+  let isYemeni = false;
+  let clickCount = 0;
+
+  const now = new Date();
+  document.getElementById('loginTime').innerText = `دخلت: ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+  // إضافة تنبيه في لوحة اليمني
+  function addYemeniAlert(msg) {
+      const alertsDiv = document.getElementById('yemeniAlerts');
+      const alert = document.createElement('div');
+      alert.className = 'ym-alert';
+      alert.innerText = `🔔 ${msg}`;
+      alertsDiv.prepend(alert);
+  }
+
+  // تفعيل لوحة اليمني (الضغط 3 مرات على الشعار)
+  document.getElementById('secretAdminBtn').addEventListener('click', () => {
+      clickCount++;
+      setTimeout(() => { clickCount = 0; }, 1000);
+      if (clickCount === 3) {
+          document.getElementById('yemeniPanel').classList.add('open');
+          isYemeni = true;
+          document.getElementById('botTitle').innerText = "مساعد العمليات السيادي";
+          document.getElementById('botSubtitle').innerText = "مرحباً يا يمني، أنا جاهز";
+          clickCount = 0;
+          addYemeniAlert("تم تفعيل لوحة التحكم السيادية.");
+      }
+  });
+
+  function closeYemeni() {
+      document.getElementById('yemeniPanel').classList.remove('open');
+      isYemeni = false;
+      document.getElementById('botTitle').innerText = "مساعد مرصد";
+      document.getElementById('botSubtitle').innerText = "متصل · يرد فوراً";
+  }
+
+  // 2. قراءة المنتجات
+  Papa.parse("Marsad_Valid_Products.csv", {
+    download: true, header: true,
+    complete: function(results) {
+      allProducts = results.data.filter(row => row['اسم المنتج'] && row['السعر']);
+      renderProducts();
+    }
+  });
+
+  function renderProducts() {
+    const list = document.getElementById('productList');
+    list.innerHTML = '';
+    allProducts.slice(0, 15).forEach((p, index) => {
+      const name = p['اسم المنتج'];
+      const price = parseFloat(p['السعر']).toFixed(2);
+      const icon = p['القطاع'] === 'بطاقة رقمية' ? '💳' : '📦';
+      const div = document.createElement('div');
+      div.className = 'svc';
+      div.innerHTML = `
+        <div class="icon-box">${icon}</div>
+        <div class="info"><b>${name}</b><span>${p['القطاع'] || 'بقالة'}</span></div>
+        <div class="price-tag">${price}<small>ريال</small></div>
+      `;
+      div.onclick = () => addToCart(name, price);
+      list.appendChild(div);
+    });
+  }
+
+  // 3. إدارة السلة
+  function addToCart(name, price) {
+    const existing = cart.find(item => item.name === name);
+    if (existing) existing.qty += 1; else cart.push({ name, price, qty: 1 });
+    updateCartUI();
+    document.querySelector('[data-nav="booking"]').click();
+    addYemeniAlert(`العميل أضاف ${name} للسلة.`);
+  }
+
+  function updateCartUI() {
+    const cartList = document.getElementById('cartList');
+    const cartTotal = document.getElementById('cartTotal');
+    const cartCount = document.getElementById('cartCount');
     
-    gc1, gc2, gc3, gc4 = st.columns(4)
+    if (cart.length === 0) {
+      cartList.innerHTML = '<p style="text-align:center; color:var(--muted);">السلة فارغة</p>';
+      cartTotal.style.display = 'none'; cartCount.innerText = 0; return;
+    }
 
-    with gc1:
-        st.markdown("""
-            <div class="game-card-pkg">
-                <h3 style="color: #60a5fa;">باقة التحدي الأساسي</h3>
-                <h1 style="color: #d4af37; margin: 1rem 0;">50 ر.س</h1>
-                <p style="color: #94a3b8; font-size: 0.85rem;">كود شحن فوري مع مفتاح أسرار خفيف للبدايات.</p>
-            </div>
-        """, unsafe_allow_html=True)
-        if st.button("شراء باقة 50 ريال", key="p_50"):
-            st.success("✨ تم توليد كود الغموض (50 ر.س) بنجاح! جاهز للتسليم.")
-
-    with gc2:
-        st.markdown("""
-            <div class="game-card-pkg">
-                <h3 style="color: #34d399;">باقة المحترف المتمرد</h3>
-                <h1 style="color: #d4af37; margin: 1rem 0;">150 ر.س</h1>
-                <p style="color: #94a3b8; font-size: 0.85rem;">رصيد مضاعف + أداة كشف المسارات السرية في اللعبة.</p>
-            </div>
-        """, unsafe_allow_html=True)
-        if st.button("شراء باقة 150 ريال", key="p_150"):
-            st.success("✨ تم توليد كود الغموض (150 ر.س) بنجاح! استعد للإثارة.")
-
-    with gc3:
-        st.markdown("""
-            <div class="game-card-pkg">
-                <h3 style="color: #f43f5e;">باقة السيادة الذهبية</h3>
-                <h1 style="color: #d4af37; margin: 1rem 0;">300 ر.س</h1>
-                <p style="color: #94a3b8; font-size: 0.85rem;">صلاحيات استثنائية، أسلحة حصرية، ومراتب متقدمة.</p>
-            </div>
-        """, unsafe_allow_html=True)
-        if st.button("شراء باقة 300 ريال", key="p_300"):
-            st.success("✨ تم توليد كود الغموض (300 ر.س) بنجاح! مبروك السيطرة.")
-
-    with gc4:
-        st.markdown("""
-            <div class="game-card-pkg">
-                <h3 style="color: #a855f7;">باقة الأسطورة المطلقة</h3>
-                <h1 style="color: #d4af37; margin: 1rem 0;">700 ر.س</h1>
-                <p style="color: #94a3b8; font-size: 0.85rem;">القوة القصوى، مفاتيح الإمبراطورية، والوصول لكافة الأسرار.</p>
-            </div>
-        """, unsafe_allow_html=True)
-        if st.button("شراء باقة 700 ريال", key="p_700"):
-            st.success("✨ تم توليد كود الغموض الأسطوري (700 ر.س) بنجاح! السيادة المطلقة بين يديك.")
-
-# --- 4. المكتبة التشغيلية وأسرار منع الخسائر ---
-elif nav == "📚 المكتبة التشغيلية وأسرار منع الخسائر":
-    st.title("📚 المكتبة التشغيلية وأسرار الحماية الميدانية")
-    st.markdown("أرشيفك المهني وخبرتك العميقة في إدارة المستودعات، فحص الطبالي، التعامل مع الفوارغ، ومنع التلف والخسائر.")
-
-    col_l1, col_l2 = st.columns(2)
-    with col_l1:
-        st.markdown("""
-            <div class="shelf-category-box">
-                <h3 style="color: #d4af37;">📦 بروتوكول استلام الطبالي وفحص الفوارغ</h3>
-                <p style="color: #cbd5e1; font-size: 0.95rem;">
-                    كيفية تدقيق الشحنات الواردة، رصد العبوات المفتوحة، وتجنب الهدر المالي بنسبة 100% بناءً على الخبرة الميدانية المعتمدة.
-                </p>
-                <span style="color: #34d399; font-weight: bold;">مشمول في حزمة السيادة التشغيلية</span>
-            </div>
-        """, unsafe_allow_html=True)
-    with col_l2:
-        st.markdown("""
-            <div class="shelf-category-box">
-                <h3 style="color: #d4af37;">🛡️ هندسة منع الخسائر في الأسواق الكبرى</h3>
-                <p style="color: #cbd5e1; font-size: 0.95rem;">
-                    أدلة التشغيل السريعة والتقارير الأمنية والميدانية المخصصة لحماية البضائع ورفع كفاءة التخزين السريع دون مستودعات ضخمة.
-                </p>
-                <span style="color: #34d399; font-weight: bold;">مشمول في حزمة السيادة التشغيلية</span>
-            </div>
-        """, unsafe_allow_html=True)
-
-# --- 5. الحاسبة السرية والذكاء الاصطناعي (محمي) ---
-elif nav == "🧮 الحاسبة السرية والذكاء الاصطناعي (محمي)":
-    st.title("🧮 الحاسبة السرية والذكاء الاصطناعي")
-    if not st.session_state["is_unlocked"]:
-        st.markdown("""
-            <div class="paywall-box">
-                <h2>🔒 حصن مرصد الأمني المحمي</h2>
-                <p>هذا القسم مغلق تماماً بحراسة رقمية لمنع المتطفلين والمنافسين من الاطلاع على هوامش الأرباح السرية.</p>
-            </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.success("🔓 أهلاً بك يا دكتور مخلد! الحاسبة السرية والذكاء الاصطناعي مفعلة بالكامل.")
-
-# --- 6. بوابة التفعيل والتحقق البنكي ---
-elif nav == "💳 بوابة التفعيل والتحقق البنكي":
-    st.title("💳 بوابة التحقق البنكي وتفعيل الصلاحيات السيادية")
-    st.markdown("""
-        <div class="paywall-box" style="text-align: center;">
-            <h3 style="color: #d4af37; margin-top:0;">مؤسسة مرصد الفرص للتجارة التشغيلية والألعاب</h3>
-            <p style="font-size: 1.1rem; color: #cbd5e1; margin-top: 10px;">حساب التحويل البنكي الرسمي المعتمد:</p>
-            <p style="font-family: monospace; font-size: 1.4rem; font-weight: bold; color: #60a5fa;">IBAN: SA03 8000 0000 0000 0000 0000</p>
+    cartList.innerHTML = '';
+    let total = 0;
+    cart.forEach((item, index) => {
+      total += item.price * item.qty;
+      cartList.innerHTML += `
+        <div class="cart-item">
+          <div>${item.name}</div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button class="qty-btn" onclick="changeQty(${index}, -1)">-</button>
+            <span>${item.qty}</span>
+            <button class="qty-btn" onclick="changeQty(${index}, 1)">+</button>
+          </div>
         </div>
-    """, unsafe_allow_html=True)
+      `;
+    });
+    cartTotal.innerText = `الإجمالي: ${total.toFixed(2)} ر.س`;
+    cartTotal.style.display = 'block';
+    cartCount.innerText = cart.reduce((sum, item) => sum + item.qty, 0);
+    document.getElementById('ymSalesTotal').innerText = total.toFixed(2);
+  }
+
+  function changeQty(index, change) {
+    cart[index].qty += change;
+    if (cart[index].qty <= 0) cart.splice(index, 1);
+    updateCartUI();
+  }
+
+  // 4. التنقل
+  document.querySelectorAll('[data-nav]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('page-' + btn.dataset.nav).classList.add('active');
+      document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
+      if(btn.classList.contains('bnav-item')) btn.classList.add('active');
+    });
+  });
+
+  // 5. إرسال الطلب للواتساب (مع الإشعارات)
+  document.getElementById('bookingForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (cart.length === 0) { alert('السلة فارغة!'); return; }
     
-    code_input = st.text_input("أدخل كود التفعيل المالي للوصول للمنطقة المحمية:", type="password")
-    if st.button("تفعيل الصلاحيات السيادية"):
-        if code_input == "2026":
-            st.session_state["is_unlocked"] = True
-            st.success("🎉 تم التفعيل بنجاح! الصلاحيات الكاملة أصبحت بين يديك.")
-        else:
-            st.error("❌ كود التفعيل غير صحيح.")
+    const name = document.getElementById('bName').value;
+    const phone = document.getElementById('bPhone').value;
+    const location = document.getElementById('bLocation').value;
+    const type = document.getElementById('bCar').value;
+    const time = document.getElementById('bTime').value;
+
+    let orderDetails = cart.map(item => `- ${item.name} (الكمية: ${item.qty})`).join('\n');
+    let total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0).toFixed(2);
+
+    const msg = `مرحباً مرصد، طلب جديد:\n👤 المحل: ${name}\n📱 الجوال: ${phone}\n📍 الموقع: ${location}\n🏢 النشاط: ${type}\n🕐 الوقت: ${time}\n\n📦 الطلبات:\n${orderDetails}\n\n💰 الإجمالي: ${total} ر.س`;
+    
+    window.open(`https://wa.me/${YEMENI_PHONE}?text=${encodeURIComponent(msg)}`, '_blank');
+    
+    document.getElementById('ymSalesCount').innerText = parseInt(document.getElementById('ymSalesCount').innerText) + 1;
+    addYemeniAlert(`عملية شراء جديدة من ${name} بقيمة ${total} ر.س!`);
+
+    setTimeout(() => { window.open(`https://wa.me/${ADMIN_PHONE}?text=${encodeURIComponent(msg)}`, '_blank'); }, 1500);
+    
+    cart = [];
+    updateCartUI();
+    alert("تم إرسال طلبك بنجاح! سيتواصل معك اليمني.");
+  });
+
+  // 6. الشات بوت (معدل ليعمل للمستخدم واليمني)
+  function botReply(text) {
+    const msgs = document.getElementById('botMsgs');
+    msgs.innerHTML += `<div class="msg user">${text}</div>`;
+    let reply = "أهلاً بك، اختر منتجك من السلة واطلبه.";
+    
+    if (isYemeni) {
+        if (text.includes('مبيعات') || text.includes('تقرير')) {
+            reply = `📊 تقرير المبيعات:\nعدد العمليات: ${document.getElementById('ymSalesCount').innerText}\nالإجمالي: ${document.getElementById('ymSalesTotal').innerText} ر.س`;
+        } else if (text.includes('نظام') || text.includes('حالة')) {
+            reply = "🟢 النظام يعمل بكفاءة 100%. جميع الملفات والصور مشفرة ومربوطة.";
+        } else {
+            reply = "أهلاً يا مدير العمليات. أنا مساعدك السيادي، اسألني عن التقرير أو حالة النظام.";
+        }
+    } else {
+        if (text.includes('سعر') || text.includes('بكم')) reply = "💧 سعر كرتون الموية يبدأ من 11 ريال.";
+        if (text.includes('أطلب')) reply = "📝 اذهب للسلة، اختر المنتجات، واملأ البيانات.";
+        if (text.includes('رقم') || text.includes('اليمني')) reply = "📞 للتواصل: +966 53 234 0613";
+    }
+
+    setTimeout(() => {
+      msgs.innerHTML += `<div class="msg bot">${reply}</div>`;
+      msgs.scrollTop = msgs.scrollHeight;
+    }, 500);
+  }
+
+  document.getElementById('botToggle').onclick = () => document.getElementById('botPanel').classList.add('open');
+  document.getElementById('botClose').onclick = () => document.getElementById('botPanel').classList.remove('open');
+  
+  function sendBot() {
+    const val = document.getElementById('botText').value;
+    if (!val) return;
+    botReply(val);
+    document.getElementById('botText').value = '';
+  }
+
+  // 7. زر المشاركة
+  function shareStore() {
+    if (navigator.share) {
+      navigator.share({
+        title: 'منصة مرصد للتوريد',
+        text: 'اطلب احتياجات محلك بالجملة من مرصد!',
+        url: window.location.href,
+      });
+    } else {
+      alert('انسخ الرابط وشاركه: ' + window.location.href);
+    }
+  }
+
+  // 8. الكتاب
+  function openBook() {
+    window.open('https://share.streamlit.io/', '_blank');
+  }
+</script>
+</body>
+</html>
